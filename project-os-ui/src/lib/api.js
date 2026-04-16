@@ -236,6 +236,10 @@ export async function unarchiveProject(id) {
   }))
 }
 
+export async function deleteProject(id) {
+  return handle(await fetch(`${BASE}/${id}`, { method: 'DELETE' }))
+}
+
 export async function listProjectsAll(includeArchived = false) {
   const qs = includeArchived ? '?archived=true' : ''
   return handle(await fetch(`${BASE}${qs}`))

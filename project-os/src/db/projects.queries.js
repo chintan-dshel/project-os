@@ -15,7 +15,10 @@ export async function findProjectById(id) {
        -- Aggregate intake arrays in one round-trip
        COALESCE(
          json_agg(DISTINCT jsonb_build_object(
-           'id', sc.id, 'criterion', sc.criterion, 'sort_order', sc.sort_order
+           'id', sc.id, 'criterion', sc.criterion, 'sort_order', sc.sort_order,
+           'smart_specific', sc.smart_specific, 'smart_measurable', sc.smart_measurable,
+           'smart_achievable', sc.smart_achievable, 'smart_relevant', sc.smart_relevant,
+           'smart_timebound', sc.smart_timebound, 'smart_score', sc.smart_score
          )) FILTER (WHERE sc.id IS NOT NULL), '[]'
        ) AS success_criteria,
        COALESCE(

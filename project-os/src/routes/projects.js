@@ -151,4 +151,15 @@ router.post('/:id/unarchive', async (req, res, next) => {
   } catch (err) { next(err) }
 })
 
+router.delete('/:id', async (req, res, next) => {
+  try {
+    const { rows } = await query(
+      `DELETE FROM projects WHERE id=$1 RETURNING id`,
+      [req.params.id],
+    )
+    if (!rows[0]) return res.status(404).json({ error: 'Project not found' })
+    res.json({ deleted: true, id: rows[0].id })
+  } catch (err) { next(err) }
+})
+
 export default router;

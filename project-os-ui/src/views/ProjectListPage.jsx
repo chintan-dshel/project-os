@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { listProjectsAll, createProject, archiveProject, unarchiveProject } from '../lib/api.js'
+import { listProjectsAll, createProject, archiveProject, unarchiveProject, deleteProject } from '../lib/api.js'
 import ThemeToggle from '../components/ThemeToggle.jsx'
 
 const STAGE_ORDER = ['intake', 'planning', 'awaiting_approval', 'execution', 'milestone_retro', 'ship_retro', 'complete']
@@ -158,7 +158,30 @@ export default function ProjectListPage() {
             <div className="project-list-section-label">Active projects</div>
             <div className="project-grid">
               {active.map(p => (
-                <ProjectCard key={p.id} project={p} onClick={() => navigate(`/projects/${p.id}`)} />
+                <div key={p.id} className="project-card-wrap">
+                  <ProjectCard project={p} onClick={() => navigate(`/projects/${p.id}`)} />
+                  <div className="project-card__actions">
+                    <button
+                      className="project-card__action-btn"
+                      title="Archive project"
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        await archiveProject(p.id)
+                        load()
+                      }}
+                    >Archive</button>
+                    <button
+                      className="project-card__action-btn project-card__action-btn--danger"
+                      title="Permanently delete project"
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        if (!window.confirm(`Delete "${p.title}" permanently? This cannot be undone.`)) return
+                        await deleteProject(p.id)
+                        load()
+                      }}
+                    >Delete</button>
+                  </div>
+                </div>
               ))}
             </div>
           </>

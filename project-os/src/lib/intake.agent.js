@@ -24,7 +24,6 @@
 import { callClaude, extractJSON } from './anthropic.js';
 import { transaction }             from '../db/pool.js';
 import {
-  insertSuccessCriteria,
   insertScopeItems,
   insertSkills,
   insertOpenQuestions,
@@ -51,7 +50,7 @@ You are NOT an interviewer. You are a senior PM who reads fast, infers smartly, 
 - The founder is correcting or confirming your draft
 - Update the brief accordingly
 - Ask at most one more question if something critical is still unknown
-- If the founder says "looks good", "yes", "correct", "that's right", or stops correcting → finalise immediately
+- If the founder says "looks good", "yes", "correct", "that's right", or stops correcting → finalise immediately, unconditionally — do not raise assumptions or missing details at this point
 
 ### NEVER ask about:
 - Things you can reasonably infer from context
@@ -76,7 +75,48 @@ Generate the brief when you have reasonable answers (even if assumed) for:
 - Rough success signal
 
 A brief with honest assumptions is FAR better than waiting for perfect answers.
-Confidence score reflects how much is assumed vs confirmed — 60+ is fine to proceed.
+Confidence score is purely informational — it reflects how much is assumed vs confirmed. ANY confidence score is fine to proceed. A score of 45 with 4 logged assumptions is a complete, honest brief. Never use confidence score as a reason to keep asking questions.
+
+## ASSUMPTION AUDIT
+
+Before generating success criteria, identify the 1–2 biggest unvalidated assumptions in the brief — claims about market need, user behaviour, or feasibility that the founder stated as fact but has not verified.
+
+For each one:
+- State it explicitly: "You've assumed [X] — this is unvalidated."
+- Log it as a risk prefixed with "ASSUMPTION:" in the risks array
+
+Examples of unvalidated assumptions to catch:
+- "there's a real gap in the market" — market validation not done
+- "people really struggle with X" — user research not cited
+- "this will be easy to build" — technical feasibility not assessed
+- A target user stated with no evidence they exist or want this
+
+**Critical rule:** Unvalidated assumptions NEVER block the brief. Log them as risks and finalise. A brief with transparent assumptions is correct and complete. The confidence score reflects how much is assumed vs confirmed — it is informational, not a gate. A confidence score of 50 with 4 logged assumptions is a good brief, not an incomplete one.
+
+## SMART OBJECTIVE SCORING
+
+Before finalising, evaluate each success criterion against the SMART rubric.
+Score each dimension 0–2:
+- 2 = clearly met
+- 1 = partially met / could be stronger
+- 0 = absent
+
+| Dimension  | What earns 2 |
+|---|---|
+| specific   | Unambiguous — two people read it identically |
+| measurable | Number, threshold, or observable outcome stated |
+| achievable | Feasibility consideration present |
+| relevant   | Traceable connection to a stated user need |
+| timebound  | Deadline or milestone attached |
+
+**SMART gate:** Before finalising:
+1. Produce a minimum of 3 success criteria — if the founder gave fewer, derive additional ones from the core problem and target user
+2. Criteria must span at least two of these dimensions — if they don't, derive a missing one:
+   - **User outcome** — does the user achieve something meaningful? (e.g. retention, behaviour change)
+   - **Product behaviour** — does the product work as intended? (e.g. activation, engagement rate)
+   - **Business/traction** — does the project gain real-world validation? (e.g. users, revenue, matches)
+3. Every criterion must score ≥ 6/10 — revise weak ones autonomously, explain the change
+4. Only finalise when all three conditions are met, or the founder explicitly accepts lower coverage after seeing the scores
 
 ## OUTPUT FORMAT
 
@@ -93,7 +133,18 @@ Then output this JSON block:
     "project_type": "saas | app | content | service | hardware | research | other",
     "target_user": "",
     "core_problem": "",
-    "success_criteria": ["measurable outcome 1", "measurable outcome 2"],
+    "success_criteria": [
+      {
+        "criterion": "measurable outcome 1",
+        "specific": 2,
+        "measurable": 2,
+        "achievable": 1,
+        "relevant": 2,
+        "timebound": 2,
+        "smart_score": 9,
+        "gap": "Achievable: no baseline data — logged as assumption"
+      }
+    ],
     "v1_scope": {
       "in_scope": ["feature 1", "feature 2"],
       "out_of_scope": ["thing deferred to v2"]
@@ -208,7 +259,35 @@ async function writeBriefToDB(projectId, brief) {
       [projectId],
     );
 
-    await insertSuccessCriteria(client, projectId, success_criteria);
+    // Insert criteria — handle both plain strings and SMART-scored objects
+    for (let i = 0; i < success_criteria.length; i++) {
+      const sc = success_criteria[i];
+      if (typeof sc === 'string') {
+        await client.query(
+          `INSERT INTO success_criteria (project_id, criterion, sort_order)
+           VALUES ($1, $2, $3)`,
+          [projectId, sc, i],
+        );
+      } else {
+        await client.query(
+          `INSERT INTO success_criteria
+             (project_id, criterion, sort_order,
+              smart_specific, smart_measurable, smart_achievable,
+              smart_relevant, smart_timebound)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+          [
+            projectId,
+            sc.criterion,
+            i,
+            sc.specific   ?? null,
+            sc.measurable ?? null,
+            sc.achievable ?? null,
+            sc.relevant   ?? null,
+            sc.timebound  ?? null,
+          ],
+        );
+      }
+    }
     await insertScopeItems(client, projectId, v1_scope.in_scope, v1_scope.out_of_scope);
     await insertSkills(client, projectId, constraints.skills_available, constraints.skills_needed);
     await insertOpenQuestions(client, projectId, open_questions);
@@ -244,8 +323,27 @@ async function writeBriefToDB(projectId, brief) {
 
 // ── Main entry point ──────────────────────────────────────────────────────────
 
+const CONFIRMATION_PHRASES = [
+  'looks good', 'look good', 'sounds good', 'that looks good', 'that sounds good',
+  'yes', 'correct', "that's right", 'thats right', 'proceed', 'finalize', 'finalise',
+  'move on', 'go ahead', 'approved', 'good', 'perfect', 'great', 'ok', 'okay',
+]
+
+function isConfirmation(msg) {
+  const lower = msg.toLowerCase().trim()
+  return CONFIRMATION_PHRASES.some(p => lower === p || lower.startsWith(p + ' ') || lower.endsWith(' ' + p))
+}
+
 export async function runIntakeAgent({ project, history, userMessage }) {
-  const system   = buildSystemPrompt(project);
+  const baseSystem = buildSystemPrompt(project);
+
+  // If the founder is confirming, inject a hard finalisation instruction so the
+  // agent cannot keep asking questions regardless of confidence score or assumptions.
+  const confirming = history.length > 0 && isConfirmation(userMessage)
+  const system = confirming
+    ? `${baseSystem}\n\n## ⚠️ MANDATORY OVERRIDE\nThe founder has just confirmed the brief. You MUST output the project_brief JSON block RIGHT NOW. Do not ask any more questions. Do not mention confidence score. Do not raise assumptions. Just say "Here's your Project Brief — generating now." and output the JSON. This is a hard requirement.`
+    : baseSystem
+
   const messages = [
     ...history,
     { role: 'user', content: userMessage },

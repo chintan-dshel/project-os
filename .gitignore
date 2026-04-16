@@ -35,3 +35,7 @@ desktop.ini
 
 # Test output
 coverage/
+
+# Claude Code internal instructions — local paths, not for public repo
+CLAUDE.md
+**/CLAUDE.md

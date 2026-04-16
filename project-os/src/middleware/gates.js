@@ -76,26 +76,10 @@ export async function gatePlanning(project) {
   }
 
   // A null score means the Intake Agent never completed the brief
-  if (score === null) {
-    throw new GateError(
-      GATE_CODES.LOW_CONFIDENCE,
-      'Project brief is incomplete — the Intake Agent has not yet produced a confidence score. ' +
-      'Complete the intake conversation before advancing to planning.',
-      'intake',
-      { confidence_score: null, required: 70 },
-    );
-  }
-
-  if (score < 70) {
-    throw new GateError(
-      GATE_CODES.LOW_CONFIDENCE,
-      `Project brief confidence score is ${score}/100, below the required threshold of 70. ` +
-      `Return to intake and resolve the open questions to raise confidence before planning.`,
-      'intake',
-      { confidence_score: score, required: 70, gap: 70 - score },
-    );
-  }
-  // score ≥ 70 → pass
+  // Confidence score is informational only — it is displayed in the UI but does
+  // not block planning. The score reflects assumption density, not brief quality.
+  // A brief with many logged assumptions is honest, not incomplete.
+  // Gate removed: let the founder decide when they're ready to proceed.
 }
 
 // ── Gate: execution ───────────────────────────────────────────────────────────

@@ -3,7 +3,7 @@ export default function BriefView({ project, state }) {
 
   const inScope  = (project.scope_items ?? []).filter(s => s.in_scope)
   const outScope = (project.scope_items ?? []).filter(s => !s.in_scope)
-  const criteria = (project.success_criteria ?? []).map(s => typeof s === 'string' ? s : s.criterion)
+  const criteria = (project.success_criteria ?? []).map(s => typeof s === 'string' ? { criterion: s } : s)
   const openQs   = (project.open_questions ?? []).filter(q => !q.resolved)
   const allTasks = (state?.phases ?? []).flatMap(p => p.milestones ?? []).flatMap(m => m.tasks ?? [])
   const done     = allTasks.filter(t => t.status === 'done').length
@@ -70,12 +70,41 @@ export default function BriefView({ project, state }) {
           <div className="bv-section">
             <div className="bv-section__label">Success criteria</div>
             <div className="bv-criteria">
-              {criteria.map((c, i) => (
-                <div key={i} className="bv-criterion">
-                  <span className="bv-criterion__dot">◎</span>
-                  <span>{c}</span>
-                </div>
-              ))}
+              {criteria.map((c, i) => {
+                const hasScores = c.smart_score != null
+                const dims = [
+                  { label: 'S', key: 'smart_specific' },
+                  { label: 'M', key: 'smart_measurable' },
+                  { label: 'A', key: 'smart_achievable' },
+                  { label: 'R', key: 'smart_relevant' },
+                  { label: 'T', key: 'smart_timebound' },
+                ]
+                const scoreColor = c.smart_score >= 8 ? 'var(--green)' : c.smart_score >= 6 ? 'var(--amber)' : 'var(--red, #e05)'
+                return (
+                  <div key={i} className="bv-criterion">
+                    <div className="bv-criterion__top">
+                      <span className="bv-criterion__dot">◎</span>
+                      <span>{c.criterion}</span>
+                    </div>
+                    {hasScores && (
+                      <div className="bv-criterion__smart">
+                        {dims.map(d => {
+                          const val = c[d.key]
+                          const col = val === 2 ? 'var(--green)' : val === 1 ? 'var(--amber)' : 'var(--text-3)'
+                          return (
+                            <span key={d.label} className="bv-smart-dim" style={{ color: col }}>
+                              {d.label}{val ?? '–'}
+                            </span>
+                          )
+                        })}
+                        <span className="bv-smart-total" style={{ color: scoreColor }}>
+                          {c.smart_score}/10
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}

@@ -64,12 +64,21 @@ Risk score = likelihood × impact (1–9):
 - 1–3: LOW — log and monitor
 
 ## SCOPE GUARD
-If the founder proposes ANY change to the plan:
-"Adding [X] would cost ~[N] hours and push your ship date. You have three options:
-A) Add it and extend the timeline
-B) Add it and cut [specific existing item]
+If the founder proposes ANY change to the plan, run a formal impact assessment BEFORE presenting options:
+1. **Validation check** — is this change on the project's success criteria? If not, flag it explicitly:
+   "This feature is not on your success criteria — do you have evidence it's needed, or is this a nice-to-have?"
+2. **Timeline impact** — hours/days added or saved
+3. **Effort impact** — hours of work, component breakdown
+4. **Risk impact** — what breaks or gets riskier
+
+Then present:
+"Adding [X] would cost ~[N] hours and push your ship date by [D]. You have three options:
+A) Accept + extend the timeline by [D]
+B) Accept + cut [specific existing item] to stay on schedule
 C) Park it in the backlog for v2"
-Log the decision either way.
+
+Log the outcome as a formal change_request — whether approved, rejected, or parked.
+NEVER accept or reject a scope change without completing the impact assessment first.
 
 ## MOMENTUM SCORE
 Calculate 0–100 based on:
@@ -122,12 +131,25 @@ If nothing changed, output an empty updates object.
         "description": "Waiting for Stripe Connect approval before webhook testing",
         "task_key": "task_4"
       }
+    ],
+    "new_change_requests": [
+      {
+        "description": "Add dark mode to the dashboard",
+        "change_type": "add_scope",
+        "timeline_impact": "+8 hours, pushes ship date by ~1 week",
+        "effort_impact": "8 hours",
+        "risk_impact": "Low — cosmetic feature, no core dependency",
+        "decision": "parked",
+        "decision_rationale": "Founder chose option C — park for v2. Not on success criteria."
+      }
     ]
   }
 }
 \`\`\`
 
 overall_status options: on_track | at_risk | blocked
+change_type options: add_scope | remove_scope | modify_scope | extend_timeline | cut_scope
+decision options: approved | rejected | parked
 
 ## SPECIALIST SUGGESTION (optional)
 If a task is clearly suited for a specialist agent to do the work, include this in your JSON.
@@ -142,7 +164,7 @@ Include it in the same JSON block as execution_update:
 
 \`\`\`json
 {
-  "execution_update": { "momentum_score": 72, "task_updates": [], "new_risks": [], "new_decisions": [], "new_blockers": [] },
+  "execution_update": { "momentum_score": 72, "task_updates": [], "new_risks": [], "new_decisions": [], "new_blockers": [], "new_change_requests": [] },
   "specialist_suggestion": {
     "task_key": "task_3",
     "specialist_type": "coding",
@@ -159,9 +181,10 @@ Never suggest more than once per conversation turn.
 ## IMPORTANT
 - NEVER mark a task done unless the founder describes a concrete output
 - NEVER suppress a risk score 7+ to keep momentum going
-- NEVER accept scope changes without running the scope guard
+- NEVER accept scope changes without running the scope guard AND logging a change_request
 - If no tasks changed, set task_updates to []
 - If no new risks, set new_risks to []
+- If no scope changes, set new_change_requests to []
 - Always output the JSON block even if nothing changed (for momentum_score update)
 
 ## ALWAYS TELL THE FOUNDER WHAT TO DO NEXT
@@ -235,10 +258,11 @@ async function writeExecutionUpdate(projectId, update) {
   const {
     momentum_score,
     overall_status,
-    task_updates   = [],
-    new_risks      = [],
-    new_decisions  = [],
-    new_blockers   = [],
+    task_updates        = [],
+    new_risks           = [],
+    new_decisions       = [],
+    new_blockers        = [],
+    new_change_requests = [],
   } = update
 
   // Update project-level fields
@@ -326,6 +350,31 @@ async function writeExecutionUpdate(projectId, update) {
        VALUES ($1,$2,$3)`,
       [projectId, taskId, b.description],
     ).catch(e => console.warn('[execution] blocker insert failed:', e.message))
+  }
+
+  // New change requests — formal scope change log
+  const validChangeTypes = ['add_scope','remove_scope','modify_scope','extend_timeline','cut_scope']
+  const validDecisions   = ['approved','rejected','parked']
+  for (const cr of new_change_requests) {
+    if (!cr.description) continue
+    await query(
+      `INSERT INTO change_requests
+         (project_id, description, change_type,
+          timeline_impact, effort_impact, risk_impact,
+          decision, decision_rationale, decided_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+      [
+        projectId,
+        cr.description,
+        validChangeTypes.includes(cr.change_type) ? cr.change_type : 'add_scope',
+        cr.timeline_impact    ?? null,
+        cr.effort_impact      ?? null,
+        cr.risk_impact        ?? null,
+        validDecisions.includes(cr.decision) ? cr.decision : null,
+        cr.decision_rationale ?? null,
+        cr.decision ? new Date() : null,
+      ],
+    ).catch(e => console.warn('[execution] change_request insert failed:', e.message))
   }
 }
 
