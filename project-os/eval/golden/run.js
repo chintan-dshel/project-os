@@ -17,11 +17,13 @@ import pg from 'pg'
 import { randomUUID } from 'crypto'
 
 import { callClaude, extractJSON } from '../../src/lib/anthropic.js'
-import { scoreAgentResponse }      from '../../src/lib/judge.js'
+import { computeCostUsd }          from '../../src/lib/modelPricing.js'
 import { buildSystemPrompt as buildIntakePrompt }    from '../../src/lib/intake.agent.js'
 import { buildSystemPrompt as buildPlanningPrompt }  from '../../src/lib/planning.agent.js'
 import { buildSystemPrompt as buildExecutionPrompt } from '../../src/lib/execution.agent.js'
 import { buildMilestoneRetroPrompt, buildShipRetroPrompt } from '../../src/lib/retro.agent.js'
+
+const MODEL = 'claude-sonnet-4-6'
 
 const { Client } = pg
 const client = new Client({ connectionString: process.env.DATABASE_URL })
@@ -114,11 +116,25 @@ for (const c of cases) {
     const system   = buildSystemPrompt(c.agent, payload)
     const messages = payload.messages ?? []
 
-    const { text } = await callClaude({ system, messages, max_tokens: 4096, meta: { agent: c.agent } })
+    const callStart = performance.now()
+    const { text, inputTokens, outputTokens } = await callClaude({ system, messages, max_tokens: 4096, meta: { agent: c.agent } })
+    const agentLatencyMs = Math.round(performance.now() - callStart)
     actualOutput = text
+
+    const tokensIn  = inputTokens  ?? 0
+    const tokensOut = outputTokens ?? 0
+    const costUsd   = computeCostUsd(MODEL, tokensIn, tokensOut)
 
     judgeScore = await runJudge(c.agent, { system, messages, ...payload }, text, `${c.agent}-v1`)
     ok = judgeScore !== null && judgeScore >= c.min_judge_score
+
+    if (!dryRun) {
+      await client.query(
+        `INSERT INTO golden_runs
+           (run_id, case_id, model, actual_output, judge_score, passed, tokens_in, tokens_out, cost_usd, latency_ms)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        [runId, c.id, MODEL, actualOutput.slice(0, 4000), judgeScore ?? 0, ok, tokensIn, tokensOut, costUsd, agentLatencyMs])
+    }
   } catch (err) {
     console.log(`ERROR: ${err.message}`)
     failed++
@@ -127,14 +143,6 @@ for (const c of cases) {
 
   const passStr = ok ? 'PASS' : 'FAIL'
   console.log(`${passStr}  score=${judgeScore?.toFixed(2) ?? '?'}  min=${c.min_judge_score}`)
-
-  if (!dryRun) {
-    await client.query(
-      `INSERT INTO golden_runs
-         (run_id, case_id, model, actual_output, judge_score, passed)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [runId, c.id, 'claude-sonnet-4-20250514', actualOutput?.slice(0, 4000) ?? '', judgeScore, ok])
-  }
 
   if (ok) passed++; else failed++
 }
