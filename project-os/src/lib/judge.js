@@ -250,7 +250,7 @@ export async function scoreAgentResponse({ agentTraceId, agent, input, output, r
     return;
   }
 
-  const MODEL        = 'claude-sonnet-4-20250514';
+  const MODEL        = 'claude-sonnet-4-6';
   const judgeCostUsd = computeCostUsd(MODEL, inputTokens ?? 0, outputTokens ?? 0);
 
   await insertJudgeScore({
