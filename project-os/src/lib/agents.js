@@ -28,21 +28,22 @@ export function activeAgent(stage) {
   return STAGE_AGENT[stage] ?? 'intake';
 }
 
-export async function runActiveAgent({ project, state, history, userMessage }) {
+export async function runActiveAgent({ project, state, history, userMessage, meta = null }) {
   const agent = activeAgent(project.stage);
+  const agentMeta = meta ? { ...meta, agent } : null;
 
   switch (agent) {
     case 'intake':
-      return runIntakeAgent({ project, history, userMessage });
+      return runIntakeAgent({ project, history, userMessage, meta: agentMeta });
 
     case 'planning':
-      return runPlanningAgent({ project, history, userMessage });
+      return runPlanningAgent({ project, history, userMessage, meta: agentMeta });
 
     case 'execution':
-      return runExecutionAgent({ project, state, history, userMessage });
+      return runExecutionAgent({ project, state, history, userMessage, meta: agentMeta });
 
     case 'retro':
-      return runRetroAgent({ project, state, history, userMessage });
+      return runRetroAgent({ project, state, history, userMessage, meta: agentMeta });
 
     default:
       throw new Error(`Unknown agent for stage: ${project.stage}`);

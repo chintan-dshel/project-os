@@ -1,0 +1,48 @@
+{
+  "agent": "execution",
+  "min_judge_score": 3.5,
+  "source": "hand-curated",
+  "input_payload": {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Finished the invoice creation flow. Also added expense tracking since I was in the code anyway. Should be done in a few more hours."
+      }
+    ],
+    "project": {
+      "id": "golden-execution-01",
+      "title": "Client Invoice Tracker",
+      "stage": "execution",
+      "project_type": "saas",
+      "hours_per_week": 15,
+      "one_liner": "A lightweight SaaS for freelancers to create and track client invoices",
+      "target_user": "Freelance designers and developers",
+      "core_problem": "Freelancers lose hours chasing late payments",
+      "success_criteria": [
+        { "criterion": "50 freelancers sign up within 30 days", "type": "acquisition" }
+      ],
+      "scope_items": [
+        { "description": "Invoice creation and PDF export", "in_scope": true },
+        { "description": "Expense tracking", "in_scope": false }
+      ]
+    },
+    "state": {
+      "phases": [
+        {
+          "name": "Foundation",
+          "milestones": [
+            {
+              "name": "MVP Core",
+              "tasks": [
+                { "id": "t1", "title": "Invoice creation form", "status": "done", "estimated_hours": 3 },
+                { "id": "t2", "title": "PDF export", "status": "done", "estimated_hours": 2 },
+                { "id": "t3", "title": "Client management CRUD", "status": "in_progress", "estimated_hours": 2 },
+                { "id": "t4", "title": "Payment status tracking", "status": "not_started", "estimated_hours": 2 }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

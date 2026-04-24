@@ -151,7 +151,7 @@ One sentence, specific. Never skip it.
 
 // ── Context builder ───────────────────────────────────────────────────────────
 
-function buildSystemPrompt(project, knowledgeEntries = []) {
+export function buildSystemPrompt(project, knowledgeEntries = []) {
   // Give the Planning Agent everything it needs from the brief
   const context = {
     id:               project.id,
@@ -191,7 +191,7 @@ function buildSystemPrompt(project, knowledgeEntries = []) {
 
 // ── JSON schema validator ─────────────────────────────────────────────────────
 
-function validatePlan(plan) {
+export function validatePlan(plan) {
   if (!plan || typeof plan !== 'object') return 'plan is not an object';
   if (!plan.methodology)                 return 'missing methodology';
   if (!Array.isArray(plan.phases))       return 'phases must be an array';
@@ -318,7 +318,7 @@ async function writePlanToDB(projectId, plan) {
 
 // ── Main entry point ──────────────────────────────────────────────────────────
 
-export async function runPlanningAgent({ project, history, userMessage }) {
+export async function runPlanningAgent({ project, history, userMessage, meta = null }) {
   // Inject relevant past learnings from the knowledge hub
   const knowledgeQuery = [project.title, project.project_type, project.core_problem].filter(Boolean).join(' ')
   const knowledgeEntries = await getRelevantKnowledge(knowledgeQuery, 5).catch(() => [])
@@ -340,7 +340,8 @@ export async function runPlanningAgent({ project, history, userMessage }) {
     ({ text, inputTokens, outputTokens } = await callClaude({
       system,
       messages: correctionMessages,
-      max_tokens: 6000, // plans can be long
+      max_tokens: 6000,
+      meta,
     }));
 
     const parsed      = extractJSON(text);

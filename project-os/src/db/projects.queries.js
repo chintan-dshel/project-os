@@ -126,15 +126,15 @@ export async function findProjectState(id) {
 
 // ─── CREATE ──────────────────────────────────────────────────────────────────
 
-export async function createProject({ title, one_liner, project_type, target_user, core_problem, hours_per_week, budget, confidence_score }) {
+export async function createProject({ title, one_liner, project_type, target_user, core_problem, hours_per_week, budget, confidence_score, userId = null }) {
   const { rows } = await query(
     `INSERT INTO projects
        (title, one_liner, project_type, target_user, core_problem,
-        hours_per_week, budget, confidence_score, stage, overall_status)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'intake','on_track')
+        hours_per_week, budget, confidence_score, stage, overall_status, user_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'intake','on_track',$9)
      RETURNING *`,
     [title, one_liner, project_type, target_user, core_problem,
-     hours_per_week, budget, confidence_score],
+     hours_per_week, budget, confidence_score, userId],
   );
   return rows[0];
 }

@@ -193,7 +193,7 @@ The following is what the system already knows about this project:`;
 
 // ── Context builder ───────────────────────────────────────────────────────────
 
-function buildSystemPrompt(project) {
+export function buildSystemPrompt(project) {
   const projectContext = {
     id:               project.id,
     title:            project.title,
@@ -334,7 +334,7 @@ function isConfirmation(msg) {
   return CONFIRMATION_PHRASES.some(p => lower === p || lower.startsWith(p + ' ') || lower.endsWith(' ' + p))
 }
 
-export async function runIntakeAgent({ project, history, userMessage }) {
+export async function runIntakeAgent({ project, history, userMessage, meta = null }) {
   const baseSystem = buildSystemPrompt(project);
 
   // If the founder is confirming, inject a hard finalisation instruction so the
@@ -349,7 +349,7 @@ export async function runIntakeAgent({ project, history, userMessage }) {
     { role: 'user', content: userMessage },
   ];
 
-  const { text, inputTokens, outputTokens } = await callClaude({ system, messages });
+  const { text, inputTokens, outputTokens } = await callClaude({ system, messages, meta });
 
   // Check for completed brief JSON
   const parsed       = extractJSON(text);

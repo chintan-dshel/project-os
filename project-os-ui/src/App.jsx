@@ -16,20 +16,26 @@ import { useState, useEffect, useRef } from 'react'
 import { Routes, Route, useNavigate, useParams } from 'react-router-dom'
 import { useProject } from './hooks/useProject.js'
 import { ApprovalGate, GateErrorBanner } from './components/GateBanner.jsx'
-import SideNav from './components/SideNav.jsx'
-import StageTimeline from './components/StageTimeline.jsx'
-import ThemeToggle from './components/ThemeToggle.jsx'
+import SideNav          from './components/SideNav.jsx'
+import ActionBar        from './components/ActionBar.jsx'
+import CommandPalette   from './components/CommandPalette.jsx'
+import IntegrationsBar  from './components/IntegrationsBar.jsx'
 import DashboardView from './views/DashboardView.jsx'
 import ChatView from './views/ChatView.jsx'
 import BriefView from './views/BriefView.jsx'
 import RAIDView from './views/RAIDView.jsx'
 import EVMView from './views/EVMView.jsx'
+import TelemetryView from './views/TelemetryView.jsx'
 import SpecialistsView from './views/SpecialistsView.jsx'
 import DocsView from './views/DocsView.jsx'
 import MarketplaceView from './views/MarketplaceView.jsx'
 import KnowledgeView   from './views/KnowledgeView.jsx'
 import WorkspaceView   from './views/WorkspaceView.jsx'
+import WorkroomView    from './views/WorkroomView.jsx'
+import IntegrationsView from './views/IntegrationsView.jsx'
+import ABView           from './views/ABView.jsx'
 import ProjectListPage from './views/ProjectListPage.jsx'
+import AuthPage        from './views/AuthPage.jsx'
 import './styles.css'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -50,7 +56,17 @@ function ProjectShell() {
 
   const [view,      setView]      = useState('dashboard')
   const [chatOpen,  setChatOpen]  = useState(false)
+  const [cmdOpen,   setCmdOpen]   = useState(false)
   const prevStageRef = useRef(null)
+
+  useEffect(() => {
+    function onKey(e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setCmdOpen(true) }
+      if (e.key === 'Escape') setCmdOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   // Reactive: when stage changes, auto-open chat or navigate to dashboard
   useEffect(() => {
@@ -94,76 +110,99 @@ function ProjectShell() {
     pending_assignments: state?.pending_assignments ?? 0,
   }
 
+  function handleNav(viewId) {
+    setView(viewId)
+    setCmdOpen(false)
+  }
+
   return (
-    <div className="shell">
-      <SideNav
-        view={view}
-        setView={setView}
-        project={project}
-        state={stateWithAssignments}
-        onOpenChat={() => setChatOpen(true)}
-        onNewProject={() => navigate('/')}
-        badges={{ raid: hasHighRisk }}
-      />
+    <>
+      <div className="shell">
+        <SideNav
+          view={view}
+          setView={setView}
+          project={project}
+          state={stateWithAssignments}
+          onOpenChat={() => setChatOpen(true)}
+          onNewProject={() => navigate('/')}
+          onOpenCommandPalette={() => setCmdOpen(true)}
+          badges={{ raid: hasHighRisk }}
+        />
 
-      <header className="topbar">
-        <button className="topbar__back" onClick={() => navigate('/')} title="All projects">←</button>
-        <div className="topbar__title">{project?.title ?? '…'}</div>
-        <div className="topbar__timeline">
-          {project && <StageTimeline stage={project.stage} />}
-        </div>
-        <ThemeToggle />
-        <div className="topbar__id">{id?.slice(0, 8)}</div>
-      </header>
-
-      <main className="content">
-        {/* Gate / error banners (dashboard only) */}
-        {(isAwaiting || gateError || error) && view === 'dashboard' && (
-          <div className="view-banners">
-            {isAwaiting && <ApprovalGate project={project} onApprove={approve} approving={approving} />}
-            {gateError  && <GateErrorBanner gateError={gateError} onDismiss={clearGateError} />}
-            {error      && <div className="error-bar">{error}</div>}
+        <header className="tb">
+          <span className="tb__crumb tb__crumb--mut">ProjectOS</span>
+          <span className="tb__crumb-sep">/</span>
+          <span className="tb__crumb">{project?.title ?? '…'}</span>
+          <div className="tb__spacer" />
+          <div className="tb__right">
+            <button className="tb__icon-btn" title="Search" onClick={() => setCmdOpen(true)}>⌕</button>
+            <button className="tb__icon-btn tb__icon-btn--alert" title="Notifications">◔</button>
+            <button className="tb__icon-btn" title="Back to projects" onClick={() => navigate('/')}>←</button>
           </div>
-        )}
+        </header>
 
-        {view === 'dashboard'    && (
-          <DashboardView
-            project={project} state={state}
-            updateTaskDirect={updateTaskDirect} addComment={addComment}
-            transition={transition} setView={setView} transitioning={transitioning}
-            onOpenChat={() => setChatOpen(true)}
+        <ActionBar view={view} project={project} />
+
+        <main className="ct">
+          <IntegrationsBar />
+
+          {(isAwaiting || gateError || error) && view === 'dashboard' && (
+            <div className="view-banners">
+              {isAwaiting && <ApprovalGate project={project} onApprove={approve} approving={approving} />}
+              {gateError  && <GateErrorBanner gateError={gateError} onDismiss={clearGateError} />}
+              {error      && <div className="error-bar">{error}</div>}
+            </div>
+          )}
+
+          {view === 'dashboard'    && (
+            <DashboardView
+              project={project} state={state}
+              updateTaskDirect={updateTaskDirect} addComment={addComment}
+              transition={transition} setView={setView} transitioning={transitioning}
+              onOpenChat={() => setChatOpen(true)}
+            />
+          )}
+          {view === 'brief'        && <BriefView project={project} state={state} />}
+          {view === 'raid'         && <RAIDView projectId={id} state={state} refresh={refresh} />}
+          {view === 'analytics'    && <EVMView project={project} state={state} />}
+          {view === 'telemetry'    && <TelemetryView projectId={id} />}
+          {view === 'specialists'  && <SpecialistsView projectId={id} project={project} state={state} refresh={refresh} />}
+          {view === 'docs'         && <DocsView projectId={id} project={project} />}
+          {view === 'marketplace'  && <MarketplaceView />}
+          {view === 'knowledge'    && <KnowledgeView project={project} />}
+          {view === 'workspace'    && <WorkspaceView project={project} />}
+          {view === 'workroom'     && <WorkroomView projectId={id} project={project} />}
+          {view === 'integrations' && <IntegrationsView />}
+          {view === 'ab'           && <ABView />}
+        </main>
+
+        {chatOpen && (
+          <ChatView
+            project={project}
+            state={state}
+            conversation={conversation}
+            sending={sending}
+            onSend={send}
+            chatDisabled={chatDisabled}
+            isAwaiting={isAwaiting && view !== 'dashboard'}
+            approve={approve}
+            approving={approving}
+            gateError={gateError}
+            clearGateError={clearGateError}
+            error={error}
+            isPanel={true}
+            onClose={() => setChatOpen(false)}
           />
         )}
-        {view === 'brief'        && <BriefView project={project} state={state} />}
-        {view === 'raid'         && <RAIDView projectId={id} state={state} refresh={refresh} />}
-        {view === 'analytics'    && <EVMView project={project} state={state} />}
-        {view === 'specialists'  && <SpecialistsView projectId={id} project={project} state={state} refresh={refresh} />}
-        {view === 'docs'         && <DocsView projectId={id} project={project} />}
-        {view === 'marketplace'  && <MarketplaceView />}
-        {view === 'knowledge'    && <KnowledgeView project={project} />}
-        {view === 'workspace'    && <WorkspaceView project={project} />}
-      </main>
+      </div>
 
-      {/* Chat slide-in panel */}
-      {chatOpen && (
-        <ChatView
-          project={project}
-          state={state}
-          conversation={conversation}
-          sending={sending}
-          onSend={send}
-          chatDisabled={chatDisabled}
-          isAwaiting={isAwaiting && view !== 'dashboard'}
-          approve={approve}
-          approving={approving}
-          gateError={gateError}
-          clearGateError={clearGateError}
-          error={error}
-          isPanel={true}
-          onClose={() => setChatOpen(false)}
+      {cmdOpen && (
+        <CommandPalette
+          onClose={() => setCmdOpen(false)}
+          onNavigate={handleNav}
         />
       )}
-    </div>
+    </>
   )
 }
 
@@ -172,10 +211,26 @@ function ProjectShell() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function App() {
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('project-os:user')) } catch { return null }
+  })
+
+  function handleAuth(authedUser) {
+    setUser(authedUser)
+  }
+
+  function handleLogout() {
+    localStorage.removeItem('project-os:token')
+    localStorage.removeItem('project-os:user')
+    setUser(null)
+  }
+
+  if (!user) return <AuthPage onAuth={handleAuth} />
+
   return (
     <Routes>
-      <Route path="/"                element={<ProjectListPage />} />
-      <Route path="/projects/:id/*"  element={<ProjectShell />} />
+      <Route path="/"                element={<ProjectListPage onLogout={handleLogout} />} />
+      <Route path="/projects/:id/*"  element={<ProjectShell onLogout={handleLogout} />} />
     </Routes>
   )
 }

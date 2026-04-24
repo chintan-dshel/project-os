@@ -1,0 +1,37 @@
+{
+  "agent": "planning",
+  "min_judge_score": 3.5,
+  "source": "hand-curated",
+  "input_payload": {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Generate a detailed execution plan for this project."
+      }
+    ],
+    "project": {
+      "id": "golden-planning-01",
+      "title": "Client Invoice Tracker",
+      "stage": "planning",
+      "project_type": "saas",
+      "hours_per_week": 15,
+      "budget": 200,
+      "one_liner": "A lightweight SaaS for freelancers to create and track client invoices",
+      "target_user": "Freelance designers and developers",
+      "core_problem": "Freelancers lose hours chasing late payments and manually creating invoices in Word/Excel",
+      "success_criteria": [
+        { "criterion": "50 freelancers sign up within 30 days of launch", "type": "acquisition" },
+        { "criterion": "10 paying customers ($29/mo) within 60 days", "type": "revenue" },
+        { "criterion": "Average invoice sent within 24h of project completion for active users", "type": "engagement" }
+      ],
+      "scope_items": [
+        { "description": "Client management (name, email, rate)", "in_scope": true },
+        { "description": "Invoice creation and PDF export", "in_scope": true },
+        { "description": "Payment status tracking (paid/unpaid/overdue)", "in_scope": true },
+        { "description": "Email reminders for overdue invoices", "in_scope": false },
+        { "description": "Expense tracking", "in_scope": false }
+      ],
+      "open_questions": []
+    }
+  }
+}

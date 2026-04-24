@@ -1,5 +1,11 @@
 import { useState, useEffect } from 'react'
-import { listDocuments, fetchDocument, listGeneratedDocuments, generateDocument, getV2Backlog } from '../lib/api.js'
+import { listDocuments, fetchDocument, listGeneratedDocuments, generateDocument, getV2Backlog, listWorkspaceDocs } from '../lib/api.js'
+
+const ACL_CFG = {
+  everyone: { label: 'Everyone', color: 'var(--text-3)' },
+  core:     { label: 'Core',     color: 'var(--blue)' },
+  owner:    { label: 'Owner',    color: 'var(--amber)' },
+}
 
 function renderMd(md) {
   if (!md) return null
@@ -28,9 +34,11 @@ const DOC_TYPE_META = {
 }
 
 export default function DocsView({ projectId, project }) {
+  const [tab,           setTab]           = useState('docs')
   const [docs,          setDocs]          = useState([])
   const [generatedDocs, setGeneratedDocs] = useState([])
   const [v2Backlog,     setV2Backlog]     = useState([])
+  const [workspaceDocs, setWorkspaceDocs] = useState([])
   const [selected,      setSelected]      = useState(null)
   const [docContent,    setDocContent]    = useState(null)
   const [loadingDocs,   setLoadingDocs]   = useState(true)
@@ -42,10 +50,12 @@ export default function DocsView({ projectId, project }) {
       listDocuments(projectId).catch(() => ({ documents: [] })),
       listGeneratedDocuments(projectId).catch(() => ({ documents: [] })),
       getV2Backlog(projectId).catch(() => ({ items: [] })),
-    ]).then(([live, gen, v2]) => {
+      listWorkspaceDocs(projectId).catch(() => ({ docs: [] })),
+    ]).then(([live, gen, v2, ws]) => {
       setDocs(live.documents ?? [])
       setGeneratedDocs(gen.documents ?? [])
       setV2Backlog(v2.items ?? [])
+      setWorkspaceDocs(ws.docs ?? [])
     }).finally(() => setLoadingDocs(false))
   }, [projectId])
 
@@ -86,8 +96,59 @@ export default function DocsView({ projectId, project }) {
   return (
     <div className="docs-view">
       <div className="docs-sidebar">
+        {/* Tab switcher */}
+        <div style={{ display: 'flex', gap: 4, padding: '8px 10px 4px', borderBottom: '0.5px solid var(--line)' }}>
+          {['docs', 'workspace'].map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              style={{
+                flex: 1, padding: '4px 0', fontSize: 11, borderRadius: 'var(--r)',
+                border: '0.5px solid var(--border)',
+                background: tab === t ? 'var(--teal)' : 'transparent',
+                color: tab === t ? '#fff' : 'var(--text-2)',
+                cursor: 'pointer', fontWeight: tab === t ? 600 : 400,
+                textTransform: 'uppercase', letterSpacing: '.05em',
+              }}
+            >
+              {t === 'docs' ? 'Project Docs' : 'Workspace'}
+            </button>
+          ))}
+        </div>
 
-        <div className="docs-sidebar__section">AUTO-ASSEMBLED</div>
+        {tab === 'workspace' ? (
+          <div className="doc__list">
+            {loadingDocs
+              ? <div className="docs-loading">Loading…</div>
+              : workspaceDocs.length === 0
+                ? <div className="docs-sidebar__empty">No workspace docs yet.</div>
+                : workspaceDocs.map(d => {
+                    const acl = ACL_CFG[d.acl] ?? ACL_CFG.everyone
+                    return (
+                      <button
+                        key={d.id}
+                        className={`doc__row${selected?.id === d.id ? ' doc__row--active' : ''}`}
+                        onClick={() => {
+                          setSelected({ id: d.id, type: d.type, label: d.title, isWorkspace: true })
+                          setDocContent(d.content ?? '')
+                        }}
+                      >
+                        <div className="doc__row-main">
+                          <span className="doc__row-title">{d.title}</span>
+                          <span className="doc__acl" style={{ color: acl.color }}>{acl.label}</span>
+                        </div>
+                        <div className="doc__row-meta">
+                          <span className="doc__kind">{d.kind ?? d.type}</span>
+                          <span className="doc__row-time">{new Date(d.updated_at).toLocaleDateString()}</span>
+                        </div>
+                      </button>
+                    )
+                  })
+            }
+          </div>
+        ) : (
+          <>
+            <div className="docs-sidebar__section">AUTO-ASSEMBLED</div>
         {loadingDocs
           ? <div className="docs-loading">Loading…</div>
           : docs.length === 0
@@ -140,6 +201,8 @@ export default function DocsView({ projectId, project }) {
                 </div>
               ))}
             </div>
+          </>
+        )}
           </>
         )}
       </div>

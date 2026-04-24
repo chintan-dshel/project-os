@@ -145,18 +145,15 @@ export default function MarketplaceView() {
   )
 
   return (
-    <div className="full-view">
-      <div className="full-view__header">
-        <div className="full-view__title">Agent Marketplace</div>
-        <div className="fv-stats">
-          <span className="fv-stat">{agents.filter(a => a.is_active).length} active</span>
-          <span className="fv-stat">{agents.length} total</span>
-        </div>
-        <button className="raid-btn raid-btn--primary" style={{ marginLeft: 'auto' }} onClick={() => setShowAdd(s => !s)}>
+    <div className="view view--pad">
+      <div className="tabs" style={{ marginBottom: 16 }}>
+        <div className="full-view__title" style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)', marginRight: 'auto' }}>Agent Marketplace</div>
+        <span style={{ fontSize: 11, color: 'var(--mut)', fontFamily: 'var(--mono)' }}>{agents.filter(a => a.is_active).length} active · {agents.length} total</span>
+        <button className="btn btn--dark btn--small" onClick={() => setShowAdd(s => !s)}>
           {showAdd ? '✕ Cancel' : '+ Add custom agent'}
         </button>
       </div>
-      <div className="full-view__body">
+      <div>
         <div className="marketplace-desc">
           Manage the specialist agents available for task delegation. Toggle agents on/off, edit their system prompts, or add your own custom agents. Use template variables to inject task context automatically.
         </div>

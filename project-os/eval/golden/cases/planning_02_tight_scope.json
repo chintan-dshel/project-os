@@ -1,0 +1,36 @@
+{
+  "agent": "planning",
+  "min_judge_score": 3.5,
+  "source": "hand-curated",
+  "input_payload": {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Create a plan. I only have 8 hours a week so please keep it realistic."
+      }
+    ],
+    "project": {
+      "id": "golden-planning-02",
+      "title": "Research Notes — Researcher Pivot",
+      "stage": "planning",
+      "project_type": "saas",
+      "hours_per_week": 8,
+      "budget": 100,
+      "one_liner": "A note-taking app with citation management and collaborative annotation for researchers",
+      "target_user": "PhD students and academic researchers",
+      "core_problem": "Researchers lose context switching between Zotero, Google Docs, and annotation tools",
+      "success_criteria": [
+        { "criterion": "30 researcher signups within 6 weeks", "type": "acquisition" },
+        { "criterion": "5 of 30 users annotate at least 10 papers in first 2 weeks", "type": "engagement" },
+        { "criterion": "Retain 3 of initial 200 existing users as power users", "type": "retention" }
+      ],
+      "scope_items": [
+        { "description": "Citation import from DOI/URL", "in_scope": true },
+        { "description": "Inline annotation with highlights and notes", "in_scope": true },
+        { "description": "Real-time collaborative editing", "in_scope": false },
+        { "description": "Export to BibTeX", "in_scope": false }
+      ],
+      "open_questions": []
+    }
+  }
+}

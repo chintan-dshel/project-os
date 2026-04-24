@@ -4,7 +4,8 @@ import {
   updateProjectStage, updateMomentumScore,
 } from '../db/projects.queries.js';
 import { appendMessage, getHistory, getHistoryForContext } from '../db/conversations.queries.js';
-import { runActiveAgent, activeAgent } from '../lib/agents.js';
+import { activeAgent }            from '../lib/agents.js';
+import { runWithOrchestration }  from '../lib/orchestrator.js';
 import { runGate } from '../middleware/gates.js';
 import { query }   from '../db/pool.js';
 import { badRequest, notFound } from '../middleware/errors.js';
@@ -29,8 +30,8 @@ router.post('/', async (req, res, next) => {
 
     const agent = activeAgent(project.stage);
 
-    // 3. Persist user message
-    await appendMessage({ project_id: id, agent, role: 'user', content: message.trim() });
+    // 3. Persist user message — keep the row ID so we can link the agent trace to this conversation turn
+    const userMsg = await appendMessage({ project_id: id, agent, role: 'user', content: message.trim() });
 
     // 4. Fetch conversation history for LLM context
     const history = await getHistoryForContext(id, agent, 40);
@@ -41,10 +42,17 @@ router.post('/', async (req, res, next) => {
       state = await findProjectState(id);
     }
 
-    // 6. Run the active agent
+    const meta = {
+      projectId:      id,
+      userId:         req.user?.id ?? null,
+      conversationId: userMsg?.id  ?? null,
+      agent,
+    };
+
+    // 6. Run the active agent via orchestrator (model routing + fallback)
     let agentResponse;
     try {
-      agentResponse = await runActiveAgent({ project, state, history, userMessage: message.trim() });
+      agentResponse = await runWithOrchestration({ project, state, history, userMessage: message.trim(), meta });
     } catch (agentErr) {
       console.error('[agent] Error:', agentErr.message);
       throw agentErr;

@@ -1,0 +1,51 @@
+{
+  "agent": "retro",
+  "min_judge_score": 3.5,
+  "source": "hand-curated",
+  "input_payload": {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Finishing up the auth milestone. Everything worked but it took 3 weeks instead of 1.5 because I had to debug JWT expiry edge cases and deal with an OAuth library that had breaking changes."
+      }
+    ],
+    "project": {
+      "id": "golden-retro-03",
+      "title": "HR Copilot",
+      "stage": "execution",
+      "project_type": "b2b-saas",
+      "hours_per_week": 20,
+      "one_liner": "AI tool for HR teams to automate JD writing and screening",
+      "target_user": "HR managers at SMBs",
+      "core_problem": "Writing JDs takes 4-6h per role",
+      "success_criteria": [
+        { "criterion": "Beta live for design partners within 6 weeks", "type": "delivery" }
+      ],
+      "scope_items": [
+        { "description": "Magic link auth", "in_scope": true },
+        { "description": "JD generator", "in_scope": true }
+      ]
+    },
+    "state": {
+      "phases": [
+        {
+          "name": "Beta Build",
+          "milestones": [
+            {
+              "name": "Auth & Onboarding",
+              "status": "done",
+              "tasks": [
+                { "id": "t1", "title": "Magic link email send", "status": "done", "estimated_hours": 2, "actual_hours": 2 },
+                { "id": "t2", "title": "JWT session management", "status": "done", "estimated_hours": 2, "actual_hours": 8 },
+                { "id": "t3", "title": "Google OAuth fallback", "status": "done", "estimated_hours": 3, "actual_hours": 9 },
+                { "id": "t4", "title": "Onboarding flow", "status": "done", "estimated_hours": 3, "actual_hours": 3 }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "retro_type": "milestone",
+    "milestone_name": "Auth & Onboarding"
+  }
+}

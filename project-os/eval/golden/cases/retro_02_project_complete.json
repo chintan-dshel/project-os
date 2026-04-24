@@ -1,0 +1,41 @@
+{
+  "agent": "retro",
+  "min_judge_score": 3.5,
+  "source": "hand-curated",
+  "input_payload": {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Project is done. Shipped 2 weeks late. Got 38 signups (target was 50). 8 paying customers (target was 10). The scope creep with expense tracking cost me about 2 weeks. The core invoice flow is solid."
+      }
+    ],
+    "project": {
+      "id": "golden-retro-02",
+      "title": "Client Invoice Tracker",
+      "stage": "retro",
+      "project_type": "saas",
+      "hours_per_week": 15,
+      "one_liner": "A lightweight SaaS for freelancers to create and track client invoices",
+      "target_user": "Freelance designers and developers",
+      "core_problem": "Freelancers lose hours chasing late payments",
+      "success_criteria": [
+        { "criterion": "50 freelancers sign up within 30 days", "type": "acquisition", "achieved": false },
+        { "criterion": "10 paying customers within 60 days", "type": "revenue", "achieved": false }
+      ],
+      "scope_items": []
+    },
+    "state": {
+      "phases": [
+        {
+          "name": "Foundation",
+          "milestones": [{ "name": "MVP Core", "status": "done", "tasks": [] }]
+        },
+        {
+          "name": "Monetization",
+          "milestones": [{ "name": "Payments Live", "status": "done", "tasks": [] }]
+        }
+      ]
+    },
+    "retro_type": "ship"
+  }
+}

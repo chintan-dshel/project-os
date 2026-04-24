@@ -134,8 +134,8 @@ export default function EVMView({ project, state }) {
   const phases    = state?.phases ?? []
 
   return (
-    <div className="full-view">
-      <div className="full-view__header">
+    <div className="view view--pad">
+      <div className="full-view__header" style={{ marginBottom: 20, paddingLeft: 0, paddingRight: 0, paddingTop: 0, background: 'none', borderBottom: '1px solid var(--line)' }}>
         <div className="full-view__title">EVM Analytics</div>
         <div className="fv-stats">
           <span className="fv-stat">Day {daysIn + 1} of {totalDays}</span>
@@ -150,7 +150,7 @@ export default function EVMView({ project, state }) {
           )}
         </div>
       </div>
-      <div className="full-view__body">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         <div className="evm-gauges">
           <div className="evm-gauge-block">
             <EVMGauge label="SPI" value={SPI} />

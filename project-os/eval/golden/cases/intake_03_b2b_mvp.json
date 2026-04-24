@@ -1,0 +1,28 @@
+{
+  "agent": "intake",
+  "min_judge_score": 3.5,
+  "source": "hand-curated",
+  "input_payload": {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Building an AI tool for HR teams at SMBs (50-200 employees) to automate job description writing and screening question generation. Have 2 design partners already. 20 hrs/week. Budget ~$500/mo infra."
+      }
+    ],
+    "project": {
+      "id": "golden-intake-03",
+      "title": "HR Copilot",
+      "stage": "intake",
+      "hours_per_week": null,
+      "budget": null,
+      "one_liner": null,
+      "project_type": null,
+      "target_user": null,
+      "core_problem": null,
+      "confidence_score": null,
+      "success_criteria": [],
+      "scope_items": [],
+      "open_questions": []
+    }
+  }
+}

@@ -206,7 +206,7 @@ Name patterns explicitly: "I notice this is the second session X has been blocke
 
 // ── Context builder ───────────────────────────────────────────────────────────
 
-function buildSystemPrompt(project, state, knowledgeEntries = []) {
+export function buildSystemPrompt(project, state, knowledgeEntries = []) {
   // Give the execution agent full project state so it knows what's on the board
   const allTasks = (state?.phases ?? [])
     .flatMap(p => (p.milestones ?? []).flatMap(m =>
@@ -380,7 +380,7 @@ async function writeExecutionUpdate(projectId, update) {
 
 // ── Main entry point ──────────────────────────────────────────────────────────
 
-export async function runExecutionAgent({ project, state, history, userMessage }) {
+export async function runExecutionAgent({ project, state, history, userMessage, meta = null }) {
   // Inject relevant past learnings — only on first message of a session to avoid prompt bloat
   const knowledgeEntries = history.length === 0
     ? await getRelevantKnowledge(`${project.title} ${project.project_type ?? ''}`, 4).catch(() => [])
@@ -393,6 +393,7 @@ export async function runExecutionAgent({ project, state, history, userMessage }
     system,
     messages,
     max_tokens: 4096,
+    meta,
   })
 
   // Extract execution update JSON

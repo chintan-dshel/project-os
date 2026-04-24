@@ -1,0 +1,36 @@
+{
+  "agent": "planning",
+  "min_judge_score": 3.5,
+  "source": "hand-curated",
+  "input_payload": {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Plan this out. I want to ship a beta to my 2 design partners within 6 weeks."
+      }
+    ],
+    "project": {
+      "id": "golden-planning-03",
+      "title": "HR Copilot",
+      "stage": "planning",
+      "project_type": "b2b-saas",
+      "hours_per_week": 20,
+      "budget": 500,
+      "one_liner": "AI tool for HR teams at SMBs to automate job description writing and screening questions",
+      "target_user": "HR managers at companies with 50-200 employees",
+      "core_problem": "HR at SMBs spend 4-6 hours writing job descriptions and screening questions for each role — mostly copied and lightly edited from previous postings",
+      "success_criteria": [
+        { "criterion": "Both design partners actively using to draft JDs within 2 weeks of beta", "type": "adoption" },
+        { "criterion": "JD draft to final approval time under 30 minutes (vs 4h manual)", "type": "efficiency" },
+        { "criterion": "At least 1 design partner willing to pay $200/mo after beta", "type": "revenue" }
+      ],
+      "scope_items": [
+        { "description": "Job description generator from role title + seniority + key responsibilities", "in_scope": true },
+        { "description": "Screening question set generator (5-10 questions per JD)", "in_scope": true },
+        { "description": "ATS integrations (Lever, Greenhouse)", "in_scope": false },
+        { "description": "Candidate scoring from resume", "in_scope": false }
+      ],
+      "open_questions": []
+    }
+  }
+}

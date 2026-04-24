@@ -7,7 +7,7 @@ import { callClaude, extractJSON }   from './anthropic.js';
 import { query, transaction }        from '../db/pool.js';
 import { populateFromRetro }         from './knowledge.js';
 
-function buildMilestoneRetroPrompt(project, state, milestoneName) {
+export function buildMilestoneRetroPrompt(project, state, milestoneName) {
   const milestones = state?.phases?.flatMap(p => p.milestones ?? []) ?? []
   const ms         = milestones.find(m => m.title === milestoneName) ?? milestones[0] ?? {}
   const tasks      = ms.tasks ?? []
@@ -75,7 +75,7 @@ Read the full conversation history before every response. Never re-ask a questio
 If all three answers exist in history, output the JSON immediately.`
 }
 
-function buildShipRetroPrompt(project, state) {
+export function buildShipRetroPrompt(project, state) {
   const allTasks  = (state?.phases ?? []).flatMap(p => p.milestones ?? []).flatMap(m => m.tasks ?? [])
   const done      = allTasks.filter(t => t.status === 'done').length
   const total     = allTasks.length
@@ -272,7 +272,7 @@ function detectMilestoneName(state) {
   return candidate?.title ?? milestones[milestones.length - 1]?.title ?? 'Current Milestone'
 }
 
-export async function runRetroAgent({ project, state, history, userMessage }) {
+export async function runRetroAgent({ project, state, history, userMessage, meta = null }) {
   const isMilestone = project.stage === 'milestone_retro'
   const isShip      = project.stage === 'ship_retro'
   const milestoneName = isMilestone ? detectMilestoneName(state) : null
@@ -284,7 +284,7 @@ export async function runRetroAgent({ project, state, history, userMessage }) {
   const messages = [...history, { role: 'user', content: userMessage }]
 
   const { text, inputTokens, outputTokens } = await callClaude({
-    system, messages, max_tokens: 3000,
+    system, messages, max_tokens: 3000, meta,
   })
 
   const parsed   = extractJSON(text)

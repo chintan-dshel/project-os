@@ -1,0 +1,28 @@
+{
+  "agent": "intake",
+  "min_judge_score": 3.5,
+  "source": "hand-curated",
+  "input_payload": {
+    "messages": [
+      {
+        "role": "user",
+        "content": "I'm pivoting my existing note-taking app to focus on researchers. Currently have 200 users. Want to add citation management and collaborative annotation."
+      }
+    ],
+    "project": {
+      "id": "golden-intake-02",
+      "title": "Research Notes",
+      "stage": "intake",
+      "hours_per_week": null,
+      "budget": null,
+      "one_liner": null,
+      "project_type": null,
+      "target_user": null,
+      "core_problem": null,
+      "confidence_score": null,
+      "success_criteria": [],
+      "scope_items": [],
+      "open_questions": []
+    }
+  }
+}

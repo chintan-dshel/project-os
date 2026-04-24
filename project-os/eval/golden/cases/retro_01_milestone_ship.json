@@ -1,0 +1,48 @@
+{
+  "agent": "retro",
+  "min_judge_score": 3.5,
+  "source": "hand-curated",
+  "input_payload": {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Let's do a retro on the MVP milestone. Shipped it 1 week late. Invoice PDF export took way longer than expected — 8h vs 2h estimated. Client auth was faster than expected. Overall momentum felt low in the middle of the milestone."
+      }
+    ],
+    "project": {
+      "id": "golden-retro-01",
+      "title": "Client Invoice Tracker",
+      "stage": "execution",
+      "project_type": "saas",
+      "hours_per_week": 15,
+      "one_liner": "A lightweight SaaS for freelancers to create and track client invoices",
+      "target_user": "Freelance designers and developers",
+      "core_problem": "Freelancers lose hours chasing late payments",
+      "success_criteria": [
+        { "criterion": "50 freelancers sign up within 30 days", "type": "acquisition" }
+      ],
+      "scope_items": []
+    },
+    "state": {
+      "phases": [
+        {
+          "name": "Foundation",
+          "milestones": [
+            {
+              "name": "MVP Core",
+              "status": "done",
+              "tasks": [
+                { "id": "t1", "title": "Invoice creation form", "status": "done", "estimated_hours": 3, "actual_hours": 3 },
+                { "id": "t2", "title": "PDF export", "status": "done", "estimated_hours": 2, "actual_hours": 8 },
+                { "id": "t3", "title": "Client management CRUD", "status": "done", "estimated_hours": 2, "actual_hours": 1.5 },
+                { "id": "t4", "title": "Payment status tracking", "status": "done", "estimated_hours": 2, "actual_hours": 2 }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "retro_type": "milestone",
+    "milestone_name": "MVP Core"
+  }
+}

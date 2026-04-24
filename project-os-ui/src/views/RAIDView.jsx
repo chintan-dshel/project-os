@@ -196,25 +196,23 @@ export default function RAIDView({ projectId, state, refresh }) {
   const isRiskTab = tab === 'risks' || tab === 'assumptions' || tab === 'issues'
 
   return (
-    <div className="full-view">
-      <div className="full-view__header">
-        <div className="full-view__title">RAID Log</div>
-        <div className="raid-tabs">
-          {RAID_TABS.map(t => (
-            <button key={t.id} className={`raid-tab${tab === t.id ? ' raid-tab--active' : ''}`}
-              onClick={() => { setTab(t.id); setExpandedId(null); setShowAdd(false) }}>
-              <span>{t.icon}</span><span>{t.label}</span>
-              {DATA[t.id]?.length > 0 && <span className="raid-tab__count">{DATA[t.id].length}</span>}
-            </button>
-          ))}
-        </div>
-        <button className="raid-btn raid-btn--primary" style={{ marginLeft: 'auto' }}
+    <div className="view view--pad">
+      <div className="tabs" style={{ marginBottom: 16 }}>
+        {RAID_TABS.map(t => (
+          <button key={t.id} className={`tab${tab === t.id ? ' tab--active' : ''}`}
+            onClick={() => { setTab(t.id); setExpandedId(null); setShowAdd(false) }}>
+            {t.label}
+            {DATA[t.id]?.length > 0 && <span className="tab__n">{DATA[t.id].length}</span>}
+          </button>
+        ))}
+        <div style={{ flex: 1 }} />
+        <button className="btn btn--dark btn--small"
           onClick={() => { setShowAdd(s => !s); setExpandedId(null) }}>
           {showAdd ? '✕ Cancel' : `+ Add ${tab === 'decisions' ? 'Decision' : tab === 'assumptions' ? 'Assumption' : 'Risk'}`}
         </button>
       </div>
-      <div className="full-view__body">
-        <div className="raid-desc">
+      <div>
+        <div style={{ fontSize: 12, color: 'var(--mut)', marginBottom: 12 }}>
           {tab === 'risks'       && 'Future events that could harm the project. Score = likelihood × impact. Expand a row to materialise when it becomes real.'}
           {tab === 'assumptions' && 'Things believed to be true that have not been verified. If disproved, convert to an issue.'}
           {tab === 'issues'      && 'Risks that have become real problems. Expand to log the decision made.'}

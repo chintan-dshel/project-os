@@ -34,6 +34,32 @@ const MIGRATION_CHECKS = {
           WHERE table_schema = 'public' AND table_name = 'knowledge_entries'`,
   '009': `SELECT 1 FROM information_schema.tables
           WHERE table_schema = 'public' AND table_name = 'workspace_docs'`,
+  '010': `SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'success_criteria' AND column_name = 'smart_score'`,
+  '011': `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'users'`,
+  '012': `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'agent_traces'`,
+  '013': `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'pii_events'`,
+  '014': `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'briefs'`,
+  '015': `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'log_entries'`,
+  '016': `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'project_agent_budgets'`,
+  '017': `SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'workspace_docs' AND column_name = 'acl'`,
+  '018': `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'integrations'`,
+  '019': `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'judge_scores'`,
+  '020': `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'golden_cases'`,
+  '021': `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'ab_variants'`,
+  '022': `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'routing_decisions'`,
 }
 
 async function isApplied(client, num) {

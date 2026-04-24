@@ -18,13 +18,17 @@ const router = Router();
 router.get('/', async (req, res, next) => {
   try {
     const includeArchived = req.query.archived === 'true'
+    const userId = req.user?.id ?? null;
+    const archiveClause = includeArchived ? '' : 'AND (is_archived = FALSE OR is_archived IS NULL)';
     const { rows } = await query(
       `SELECT id, title, stage, overall_status, momentum_score, confidence_score,
               total_estimated_hours, planned_weeks, one_liner, created_at, updated_at,
               last_checkin_at, is_archived, archived_at
        FROM projects
-       ${includeArchived ? '' : 'WHERE is_archived = FALSE OR is_archived IS NULL'}
+       WHERE (user_id = $1 OR user_id IS NULL)
+       ${archiveClause}
        ORDER BY updated_at DESC`,
+      [userId],
     );
     return res.json({ projects: rows });
   } catch (err) { next(err); }
@@ -61,8 +65,8 @@ router.post('/', async (req, res, next) => {
       const { rows } = await client.query(
         `INSERT INTO projects
            (title, one_liner, project_type, target_user, core_problem,
-            hours_per_week, budget, confidence_score, stage, overall_status)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'intake','on_track')
+            hours_per_week, budget, confidence_score, stage, overall_status, user_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'intake','on_track',$9)
          RETURNING *`,
         [
           title,
@@ -73,6 +77,7 @@ router.post('/', async (req, res, next) => {
           constraints.hours_per_week ?? null,
           constraints.budget ?? null,
           confidence_score ?? null,
+          req.user?.id ?? null,
         ],
       );
       const p = rows[0];

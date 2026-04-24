@@ -39,3 +39,7 @@ coverage/
 # Claude Code internal instructions — local paths, not for public repo
 CLAUDE.md
 **/CLAUDE.md
+
+# Verification run fixtures (contain live tokens)
+verify_fixtures.json
+**/verify_fixtures.json

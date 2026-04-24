@@ -2,8 +2,81 @@ import { useState, useEffect } from 'react'
 import {
   delegateTask, approveOutput, rejectOutput, reviseOutput, listSpecialistOutputs,
   listAssignments, updateAssignment, runAssignment, analyzeAssignments,
-  listRegistry,
+  listRegistry, fetchBudgets, upsertBudget, pauseAgents, resumeAgents,
 } from '../lib/api.js'
+
+function BudgetStrip({ projectId }) {
+  const [data,    setData]    = useState(null)
+  const [working, setWorking] = useState(false)
+
+  useEffect(() => {
+    fetchBudgets(projectId).then(d => setData(d)).catch(() => {})
+  }, [projectId])
+
+  if (!data) return null
+
+  async function toggleKillSwitch() {
+    setWorking(true)
+    try {
+      if (data.paused) {
+        await resumeAgents(projectId)
+      } else {
+        await pauseAgents(projectId, 'Manual pause from Agents view')
+      }
+      const d = await fetchBudgets(projectId)
+      setData(d)
+    } catch (e) { console.error(e) }
+    finally { setWorking(false) }
+  }
+
+  return (
+    <div className="ag-budget">
+      <div className="ag-budget__row">
+        <span className="ag-budget__label">Agent Spend</span>
+        <div style={{ flex: 1 }} />
+        <button
+          className={`ag-budget__kill${data.paused ? ' ag-budget__kill--paused' : ''}`}
+          onClick={toggleKillSwitch}
+          disabled={working}
+          title={data.paused ? 'Resume all agents' : 'Pause all agents'}
+        >
+          {working ? '…' : data.paused ? '▶ Resume agents' : '⏸ Pause all'}
+        </button>
+      </div>
+      {data.paused && (
+        <div className="ag-budget__paused-banner">
+          All agents are paused. No new agent calls will be made until you resume.
+        </div>
+      )}
+      {data.budgets.length > 0 && (
+        <div className="ag-budget__items">
+          {data.budgets.map(b => {
+            const pct = b.monthly_limit_usd
+              ? Math.min(100, (parseFloat(b.spent_month_usd) / parseFloat(b.monthly_limit_usd)) * 100)
+              : null
+            return (
+              <div key={b.id} className="ag-budget__item">
+                <span className="ag-budget__slug">{b.agent_slug}</span>
+                <span className="ag-budget__spent">${parseFloat(b.spent_month_usd).toFixed(3)}</span>
+                {b.monthly_limit_usd && (
+                  <>
+                    <div className="ag-budget__bar">
+                      <div className="ag-budget__bar-fill" style={{
+                        width: `${pct}%`,
+                        background: pct > 80 ? 'var(--red)' : pct > 50 ? 'var(--amber)' : 'var(--teal)',
+                      }} />
+                    </div>
+                    <span className="ag-budget__limit">${parseFloat(b.monthly_limit_usd).toFixed(0)}/mo</span>
+                  </>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
 
 const SP_STATUS = {
   pending:  { label: 'Running…',        color: 'var(--text-3)', bg: 'var(--bg-4)' },
@@ -324,6 +397,7 @@ export default function SpecialistsView({ projectId, project, state, refresh }) 
 
   return (
     <div className="sp-view">
+      <BudgetStrip projectId={projectId} />
       <div className="sp-list-col">
         <div className="sp-list-header">
           <div className="sp-list-title">

@@ -1,0 +1,144 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Backend tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: project_os
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: project-os
+
+    env:
+      DATABASE_URL:      postgres://postgres:postgres@localhost:5432/project_os
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/project_os_test
+      JWT_SECRET:        ci-test-secret
+      ANTHROPIC_API_KEY: ci-placeholder-not-used
+      JUDGE_SAMPLE_RATE: "0"
+      NODE_ENV:          test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: project-os/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set up test database
+        run: node scripts/setup-test-db.js
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Run integration tests
+        run: npm run test:integration
+
+      - name: Run API tests
+        run: npm run test:api
+
+      - name: Coverage report
+        run: npm run test:coverage
+        if: github.ref == 'refs/heads/main'
+
+  ui-test:
+    name: Frontend tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: project-os-ui
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: project-os-ui/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run UI tests
+        run: npm test
+
+  eval-golden:
+    name: Golden dataset eval gate
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs: [test]
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: project_os
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: project-os
+
+    env:
+      DATABASE_URL:      postgres://postgres:postgres@localhost:5432/project_os_eval
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/project_os_eval
+      JWT_SECRET:        ci-test-secret
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      JUDGE_SAMPLE_RATE: "0"
+      NODE_ENV:          test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: project-os/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Bootstrap eval DB
+        run: node scripts/setup-test-db.js
+
+      - name: Seed golden cases
+        run: npm run golden:seed
+
+      - name: Run golden dataset eval gate
+        run: node eval/golden/run.js

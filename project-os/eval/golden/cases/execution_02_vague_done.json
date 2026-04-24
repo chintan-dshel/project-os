@@ -1,0 +1,48 @@
+{
+  "agent": "execution",
+  "min_judge_score": 3.5,
+  "source": "hand-curated",
+  "input_payload": {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Made good progress this week. The auth stuff is basically done."
+      }
+    ],
+    "project": {
+      "id": "golden-execution-02",
+      "title": "HR Copilot",
+      "stage": "execution",
+      "project_type": "b2b-saas",
+      "hours_per_week": 20,
+      "one_liner": "AI tool for HR teams to automate JD writing",
+      "target_user": "HR managers at SMBs",
+      "core_problem": "Writing JDs takes 4-6h per role",
+      "success_criteria": [
+        { "criterion": "Beta live for design partners within 6 weeks", "type": "delivery" }
+      ],
+      "scope_items": [
+        { "description": "User auth (magic link)", "in_scope": true },
+        { "description": "JD generator", "in_scope": true }
+      ]
+    },
+    "state": {
+      "phases": [
+        {
+          "name": "Beta Build",
+          "milestones": [
+            {
+              "name": "Beta v1",
+              "tasks": [
+                { "id": "t1", "title": "Magic link auth setup", "status": "in_progress", "estimated_hours": 3 },
+                { "id": "t2", "title": "User session management", "status": "not_started", "estimated_hours": 2 },
+                { "id": "t3", "title": "JD generator prompt + UI", "status": "not_started", "estimated_hours": 5 },
+                { "id": "t4", "title": "Design partner onboarding", "status": "not_started", "estimated_hours": 2 }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

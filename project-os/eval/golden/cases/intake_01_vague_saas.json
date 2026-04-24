@@ -1,0 +1,36 @@
+{
+  "agent": "intake",
+  "min_judge_score": 3.5,
+  "source": "hand-curated",
+  "input_payload": {
+    "messages": [
+      {
+        "role": "user",
+        "content": "I want to build a SaaS for freelancers to track their clients and invoices"
+      },
+      {
+        "role": "assistant",
+        "content": "Great — I can work with that. Here's my draft brief based on what you've described:\n\n**Client Tracker** — A lightweight SaaS for freelancers to manage client relationships, project status, and invoices in one place.\n\n**Assumptions I've made:**\n- Target user: freelance designers or developers (not agencies)\n- Core problem: losing track of client status across email, spreadsheets, and memory\n- ~10 hrs/week available (logged as ASSUMPTION: risk)\n- v1 is a solo-founder build, bootstrapped\n\n**Success criteria (draft):**\n1. 50 freelancers sign up within 30 days of launch\n2. 10 paying customers within 60 days\n3. Average invoice sent within 24h of project completion\n\nDoes this capture your intent? One question: is the invoice creation the *primary* pain point, or is it client communication tracking?"
+      },
+      {
+        "role": "user",
+        "content": "Yes that looks right. The invoice part is definitely the main pain. I have about 15 hours a week."
+      }
+    ],
+    "project": {
+      "id": "golden-intake-01",
+      "title": "Client Tracker",
+      "stage": "intake",
+      "hours_per_week": null,
+      "budget": null,
+      "one_liner": null,
+      "project_type": null,
+      "target_user": null,
+      "core_problem": null,
+      "confidence_score": null,
+      "success_criteria": [],
+      "scope_items": [],
+      "open_questions": []
+    }
+  }
+}
