@@ -7,6 +7,30 @@
       {
         "role": "user",
         "content": "Finishing up the auth milestone. Everything worked but it took 3 weeks instead of 1.5 because I had to debug JWT expiry edge cases and deal with an OAuth library that had breaking changes."
+      },
+      {
+        "role": "assistant",
+        "content": "What did you actually deliver in 'Auth & Onboarding'? Walk me through it — what's working and testable right now?"
+      },
+      {
+        "role": "user",
+        "content": "Magic link email works — users get a link, click it, land logged in with a JWT session. Google OAuth runs as a fallback. JWT session management handles expiry and refresh. The onboarding flow walks new users through their first JD prompt. It's all connected — from zero to generating a JD in one flow."
+      },
+      {
+        "role": "assistant",
+        "content": "What created the most friction on this milestone? Be specific — was it the task, the estimate, a dependency, or something about how you worked?"
+      },
+      {
+        "role": "user",
+        "content": "Two things compounded. JWT expiry had subtle clock-skew and refresh-race edge cases I didn't anticipate — nearly 2 days of debugging. Then passport-google-oauth20 published a breaking change in a minor version bump the exact week I was working on it. Had to dig through their changelog and rewrite the callback handling. Neither was in the estimate at all."
+      },
+      {
+        "role": "assistant",
+        "content": "One thing you'd do differently on the next milestone?"
+      },
+      {
+        "role": "user",
+        "content": "Pin dependency versions at the start of the milestone, not only when something breaks. And build a +20% buffer into any estimate that depends on a library I haven't touched in the last 6 months. For JWT specifically I'd write a test matrix for expiry scenarios before calling it done — I only found the edge cases in manual testing."
       }
     ],
     "project": {

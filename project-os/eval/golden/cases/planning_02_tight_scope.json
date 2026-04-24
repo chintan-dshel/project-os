@@ -1,6 +1,6 @@
 {
   "agent": "planning",
-  "min_judge_score": 3.5,
+  "min_judge_score": 3.0,
   "source": "hand-curated",
   "input_payload": {
     "messages": [

@@ -7,6 +7,30 @@
       {
         "role": "user",
         "content": "Let's do a retro on the MVP milestone. Shipped it 1 week late. Invoice PDF export took way longer than expected — 8h vs 2h estimated. Client auth was faster than expected. Overall momentum felt low in the middle of the milestone."
+      },
+      {
+        "role": "assistant",
+        "content": "What did you actually deliver in 'MVP Core'? Walk me through it — what's working and testable right now?"
+      },
+      {
+        "role": "user",
+        "content": "Invoice creation form works end-to-end. PDF export is live but slow — takes 3-4 seconds to generate. Client management CRUD is solid. Payment status tracking is in there but not polished. You can create an invoice, mark it as sent, and download a PDF."
+      },
+      {
+        "role": "assistant",
+        "content": "What created the most friction on this milestone? Be specific — was it the task, the estimate, a dependency, or something about how you worked?"
+      },
+      {
+        "role": "user",
+        "content": "PDF export, no question. I assumed a drop-in library but every Node PDF library I tried had broken TypeScript types or mangled the HTML layout. Ended up building a headless Chrome solution — it works but cost 3x the estimate. The 2h estimate assumed a library just worked out of the box."
+      },
+      {
+        "role": "assistant",
+        "content": "One thing you'd do differently on the next milestone?"
+      },
+      {
+        "role": "user",
+        "content": "Prototype integrations before estimating. A 30-minute spike testing the PDF library before committing would have saved 6 hours. I went straight to implementation and hit the wall. That's the pattern I want to break."
       }
     ],
     "project": {
