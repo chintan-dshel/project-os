@@ -66,7 +66,7 @@ jobs:
         run: npm run test:api -- --reporter=verbose
 
       - name: Coverage report
-        run: npm run test:coverage
+        run: npm run test:coverage -- --reporter=verbose
         if: github.ref == 'refs/heads/main'
 
   ui-test:
