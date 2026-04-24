@@ -97,24 +97,33 @@ export async function callClaude({ system, messages, max_tokens = MAX_TOKENS, me
 async function writeTrace({ meta, model, promptTokens, completionTokens, latencyMs, status, errorMessage }) {
   const pricing = getPricing(model);
   const costUsd = computeCostUsd(model, promptTokens, completionTokens);
+  const traceArgs = {
+    projectId:          meta?.projectId      ?? null,
+    userId:             meta?.userId         ?? null,
+    conversationId:     meta?.conversationId ?? null,
+    agent:              meta?.agent          ?? 'unknown',
+    model,
+    promptTokens,
+    completionTokens,
+    inputPricePerMtok:  pricing.input,
+    outputPricePerMtok: pricing.output,
+    costUsd,
+    latencyMs,
+    status,
+    errorMessage:       errorMessage ?? null,
+    variantId:          meta?.variantId ?? null,
+  };
   try {
-    return await insertAgentTrace({
-      projectId:          meta?.projectId      ?? null,
-      userId:             meta?.userId         ?? null,
-      conversationId:     meta?.conversationId ?? null,
-      agent:              meta?.agent          ?? 'unknown',
-      model,
-      promptTokens,
-      completionTokens,
-      inputPricePerMtok:  pricing.input,
-      outputPricePerMtok: pricing.output,
-      costUsd,
-      latencyMs,
-      status,
-      errorMessage:       errorMessage ?? null,
-      variantId:          meta?.variantId ?? null,
-    });
+    return await insertAgentTrace(traceArgs);
   } catch (err) {
+    if (err.code === '23503' && err.constraint === 'agent_traces_variant_id_fkey') {
+      try {
+        return await insertAgentTrace({ ...traceArgs, variantId: null });
+      } catch (retryErr) {
+        console.error('[telemetry] write failed', retryErr);
+        return null;
+      }
+    }
     console.error('[telemetry] write failed', err);
     return null;
   }
