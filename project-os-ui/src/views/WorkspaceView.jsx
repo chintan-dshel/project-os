@@ -12,6 +12,7 @@ import {
   listWorkspaceDocs, createWorkspaceDoc,
   updateWorkspaceDoc, deleteWorkspaceDoc, promoteToKnowledge,
 } from '../lib/api.js'
+import { renderMd } from '../lib/renderMd.jsx'
 
 const TYPE_META = {
   note:         { label: 'Note',         icon: '◻', color: 'var(--text-2)' },
@@ -151,7 +152,7 @@ function DocDetail({ doc, onUpdate, onDelete, onPromote }) {
       </div>
 
       {isAgentDoc ? (
-        <pre className="ws-detail__content ws-detail__content--agent">{content}</pre>
+        <div className="ws-detail__content ws-detail__content--agent ws-detail__content--rendered">{renderMd(content)}</div>
       ) : (
         <textarea
           className="ws-detail__content ws-detail__content--editable"

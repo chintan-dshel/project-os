@@ -458,7 +458,7 @@ function KanbanColumn({ col, tasks, assignmentMap, onUpdateTask, onAddComment, o
 
 // ── Milestone ─────────────────────────────────────────────────────────────────
 
-function MilestoneBoard({ milestone, assignmentMap, onUpdateTask, onAddComment, onComplete, onRunAgent, onSkipAgent, onViewAgents, projectStage }) {
+function MilestoneBoard({ milestone, allPhases, assignmentMap, onUpdateTask, onAddComment, onComplete, onRunAgent, onSkipAgent, onViewAgents, projectStage }) {
   const [collapsed,     setCollapsed]     = useState(false)
   const [draggingTask,  setDraggingTask]  = useState(null)
   const [overCol,       setOverCol]       = useState(null)
@@ -471,9 +471,15 @@ function MilestoneBoard({ milestone, assignmentMap, onUpdateTask, onAddComment, 
   const total    = tasks.length
   const blocked  = grouped.blocked.length
   const pct      = total > 0 ? Math.round(done / total * 100) : 0
-  const isComplete = milestone.completed_at != null
-  const inExecution = !projectStage || projectStage === 'execution'
-  const allDone    = !isComplete && total > 0 && done === total && inExecution
+  const isComplete   = milestone.completed_at != null
+  const inExecution  = !projectStage || projectStage === 'execution'
+  const allDone      = !isComplete && total > 0 && done === total && inExecution
+  const msKey        = milestone.id ?? milestone.milestone_key
+  const isShipRetro  = allDone && allPhases != null && allPhases.flatMap(p => p.milestones ?? []).every(m => {
+    const k = m.id ?? m.milestone_key
+    if (k === msKey) return true
+    return m.completed_at != null || ((m.tasks ?? []).length > 0 && (m.tasks ?? []).every(t => t.status === 'done'))
+  })
   const barColor   = isComplete ? 'var(--green)' : blocked > 0 ? 'var(--red)' : 'var(--amber)'
 
   const dragState = {
@@ -543,14 +549,18 @@ function MilestoneBoard({ milestone, assignmentMap, onUpdateTask, onAddComment, 
 
           {allDone && (
             <div className="next-step-banner">
-              <span className="next-step-banner__icon">🎉</span>
+              <span className="next-step-banner__icon">{isShipRetro ? '🚀' : '🎉'}</span>
               <div className="next-step-banner__body">
-                <div className="next-step-banner__title">Milestone complete!</div>
+                <div className="next-step-banner__title">
+                  {isShipRetro ? 'All milestones complete!' : 'Milestone complete!'}
+                </div>
                 <div className="next-step-banner__sub">
-                  All {total} tasks are done. Run a retro to capture learnings before starting the next milestone.
+                  {isShipRetro
+                    ? 'Every task is done. Run the ship retro to close the project and generate the close report.'
+                    : `All ${total} tasks are done. Run a retro to capture learnings before unlocking the next milestone.`}
                 </div>
                 <button className="next-step-banner__btn" onClick={() => onComplete?.(milestone)}>
-                  Run milestone retro →
+                  {isShipRetro ? 'Run ship retro →' : 'Run milestone retro →'}
                 </button>
               </div>
             </div>
@@ -583,7 +593,7 @@ function MilestoneBoard({ milestone, assignmentMap, onUpdateTask, onAddComment, 
 
 // ── Phase ─────────────────────────────────────────────────────────────────────
 
-function PhaseGroup({ phase, assignmentMap, onUpdateTask, onAddComment, onRunAgent, onSkipAgent, onViewAgents, onMilestoneComplete, projectStage }) {
+function PhaseGroup({ phase, allPhases, assignmentMap, onUpdateTask, onAddComment, onRunAgent, onSkipAgent, onViewAgents, onMilestoneComplete, projectStage }) {
   const [collapsed, setCollapsed] = useState(false)
   const milestones = phase.milestones ?? []
   const allTasks   = milestones.flatMap(m => m.tasks ?? [])
@@ -607,6 +617,7 @@ function PhaseGroup({ phase, assignmentMap, onUpdateTask, onAddComment, onRunAge
                 <MilestoneBoard
                   key={m.id ?? m.milestone_key}
                   milestone={m}
+                  allPhases={allPhases}
                   assignmentMap={assignmentMap}
                   onUpdateTask={onUpdateTask}
                   onAddComment={onAddComment}
@@ -687,6 +698,7 @@ export default function KanbanBoard({ phases, projectStage, assignmentMap, onUpd
           <PhaseGroup
             key={phase.id ?? phase.phase_key}
             phase={phase}
+            allPhases={phases}
             assignmentMap={assignmentMap}
             onUpdateTask={onUpdateTask}
             onAddComment={onAddComment}

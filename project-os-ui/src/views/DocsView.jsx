@@ -1,26 +1,11 @@
 import { useState, useEffect } from 'react'
 import { listDocuments, fetchDocument, listGeneratedDocuments, generateDocument, getV2Backlog, listWorkspaceDocs } from '../lib/api.js'
+import { renderMd } from '../lib/renderMd.jsx'
 
 const ACL_CFG = {
   everyone: { label: 'Everyone', color: 'var(--text-3)' },
   core:     { label: 'Core',     color: 'var(--blue)' },
   owner:    { label: 'Owner',    color: 'var(--amber)' },
-}
-
-function renderMd(md) {
-  if (!md) return null
-  return md.split('\n').map((line, i) => {
-    if (line.startsWith('# '))   return <h1  key={i} className="doc-h1">{line.slice(2)}</h1>
-    if (line.startsWith('## '))  return <h2  key={i} className="doc-h2">{line.slice(3)}</h2>
-    if (line.startsWith('### ')) return <h3  key={i} className="doc-h3">{line.slice(4)}</h3>
-    if (line.startsWith('> '))   return <blockquote key={i} className="doc-quote">{line.slice(2)}</blockquote>
-    if (line.startsWith('---'))  return <hr  key={i} className="doc-hr" />
-    if (line.startsWith('- '))   return <li  key={i} className="doc-li">{line.slice(2)}</li>
-    if (line.startsWith('| '))   return <div key={i} className="doc-table-row">{line}</div>
-    if (line.trim() === '')      return <div key={i} style={{ height: '8px' }} />
-    const boldLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    return <p key={i} className="doc-p" dangerouslySetInnerHTML={{ __html: boldLine }} />
-  })
 }
 
 const DOC_TYPE_META = {
