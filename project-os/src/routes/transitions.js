@@ -18,14 +18,15 @@ import { findProjectById, findProjectState, updateProjectStage } from '../db/pro
 import { appendMessage, getHistory } from '../db/conversations.queries.js';
 import { callClaude } from '../lib/anthropic.js';
 import { notFound, badRequest } from '../middleware/errors.js';
+import { assertProjectOwner } from '../lib/ownership.js';
+import { TRANSITION_STAGES } from '../constants/stages.js';
 
 const router = Router({ mergeParams: true });
 
 // ── Agent intro messages — what each agent says when a stage begins ───────────
 
 async function generateAgentIntro(project, state, toStage) {
-  const VALID_STAGES = ['execution', 'milestone_retro', 'ship_retro']
-  if (!VALID_STAGES.includes(toStage)) return null
+  if (!TRANSITION_STAGES.includes(toStage)) return null
 
   const agent = toStage === 'execution' ? 'execution' : 'retro'
 
@@ -106,9 +107,13 @@ That is your ENTIRE response. Warm, direct, specific. No explanation of what a s
 router.post('/', async (req, res, next) => {
   try {
     const { id }      = req.params
+    await assertProjectOwner(id, req.user.id)
     const { to_stage } = req.body ?? {}
 
     if (!to_stage) throw badRequest('to_stage is required')
+    if (!TRANSITION_STAGES.includes(to_stage)) {
+      throw badRequest(`to_stage must be one of: ${TRANSITION_STAGES.join(', ')}`)
+    }
 
     const project = await findProjectById(id)
     if (!project) throw notFound('Project not found')
