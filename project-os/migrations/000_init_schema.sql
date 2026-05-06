@@ -1,15 +1,17 @@
 -- ============================================================
 -- AI PROJECT OS — Base Schema (migration 000)
--- Runs first on a fresh database. Uses IF NOT EXISTS throughout
--- so it is safe to re-run on an existing database (no-op).
--- The constraint in the original schema.sql bottom section is
+-- Runs first on a fresh database. migrate.js tracks applied
+-- migrations in _migrations so this runs exactly once.
+-- CREATE TYPE has no IF NOT EXISTS in any Postgres version;
+-- idempotency is guaranteed by the migration tracker instead.
+-- The constraint at the bottom of the original schema.sql is
 -- handled by migration 001 and is intentionally excluded here.
 -- ============================================================
 
 
 -- ── ENUMS ────────────────────────────────────────────────────
 
-CREATE TYPE IF NOT EXISTS project_stage AS ENUM (
+CREATE TYPE project_stage AS ENUM (
   'intake',
   'planning',
   'awaiting_approval',
@@ -19,48 +21,48 @@ CREATE TYPE IF NOT EXISTS project_stage AS ENUM (
   'complete'
 );
 
-CREATE TYPE IF NOT EXISTS project_status AS ENUM (
+CREATE TYPE project_status AS ENUM (
   'on_track',
   'at_risk',
   'blocked'
 );
 
-CREATE TYPE IF NOT EXISTS project_type AS ENUM (
+CREATE TYPE project_type AS ENUM (
   'saas', 'app', 'content', 'service', 'hardware', 'research', 'other'
 );
 
-CREATE TYPE IF NOT EXISTS task_status AS ENUM (
+CREATE TYPE task_status AS ENUM (
   'todo', 'in_progress', 'done', 'blocked'
 );
 
-CREATE TYPE IF NOT EXISTS priority_level AS ENUM (
+CREATE TYPE priority_level AS ENUM (
   'critical', 'high', 'normal'
 );
 
-CREATE TYPE IF NOT EXISTS risk_likelihood AS ENUM ('low', 'medium', 'high');
-CREATE TYPE IF NOT EXISTS risk_impact     AS ENUM ('low', 'medium', 'high');
+CREATE TYPE risk_likelihood AS ENUM ('low', 'medium', 'high');
+CREATE TYPE risk_impact     AS ENUM ('low', 'medium', 'high');
 
-CREATE TYPE IF NOT EXISTS risk_status AS ENUM (
+CREATE TYPE risk_status AS ENUM (
   'open', 'mitigated', 'accepted', 'closed'
 );
 
-CREATE TYPE IF NOT EXISTS risk_owner AS ENUM (
+CREATE TYPE risk_owner AS ENUM (
   'founder', 'agent', 'external'
 );
 
-CREATE TYPE IF NOT EXISTS retro_type AS ENUM (
+CREATE TYPE retro_type AS ENUM (
   'milestone_retro', 'ship_retro'
 );
 
-CREATE TYPE IF NOT EXISTS criterion_outcome AS ENUM (
+CREATE TYPE criterion_outcome AS ENUM (
   'met', 'partially_met', 'not_met'
 );
 
-CREATE TYPE IF NOT EXISTS conversation_role AS ENUM (
+CREATE TYPE conversation_role AS ENUM (
   'user', 'assistant', 'system'
 );
 
-CREATE TYPE IF NOT EXISTS agent_name AS ENUM (
+CREATE TYPE agent_name AS ENUM (
   'intake', 'planning', 'execution', 'retro'
 );
 
