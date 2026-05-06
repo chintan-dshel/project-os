@@ -1,5 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import authRouter         from './routes/auth.js';
 import projectsRouter     from './routes/projects.js';
@@ -27,6 +29,7 @@ import { rateLimit }                     from './middleware/rateLimit.js';
 import { injectionDetection, piiAudit }  from './middleware/security.js';
 
 const app = express();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // ── Body parsing ──────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '1mb' }));
@@ -44,6 +47,9 @@ app.get('/health', (_req, res) => res.json({ ok: true, ts: new Date() }));
 
 // ── Auth routes (no auth required) ───────────────────────────────────────────
 app.use('/auth', authRouter);
+
+// ── Static UI — served before requireAuth so HTML/JS/CSS don't need a JWT ────
+app.use(express.static(path.join(__dirname, '../public')));
 
 // ── All routes below require a valid JWT ─────────────────────────────────────
 app.use(requireAuth);
@@ -70,7 +76,10 @@ app.use('/projects/:id/budgets',       budgetsRouter);
 app.use('/integrations',               integrationsRouter);
 app.use('/ab',                         abRouter);
 
-// ── 404 catch-all ─────────────────────────────────────────────────────────────
+// ── SPA fallback — unmatched GETs serve index.html; React Router handles routing
+app.get('*', (_req, res) => res.sendFile(path.join(__dirname, '../public/index.html')));
+
+// ── 404 for unmatched non-GET routes ─────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));
 
 // ── Error handler (must be last) ─────────────────────────────────────────────
