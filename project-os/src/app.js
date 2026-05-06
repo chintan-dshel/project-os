@@ -27,6 +27,7 @@ import { errorHandler }                  from './middleware/errors.js';
 import { requireAuth }                   from './middleware/auth.js';
 import { rateLimit }                     from './middleware/rateLimit.js';
 import { injectionDetection, piiAudit }  from './middleware/security.js';
+import { costCapCheck }                  from './middleware/costCap.js';
 
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -57,12 +58,12 @@ app.use(requireAuth);
 // ── Routes ────────────────────────────────────────────────────────────────────
 // Mount order is load-bearing: rateLimit → injectionDetection → piiAudit on /message.
 app.use('/projects',                   projectsRouter);
-app.use('/projects/:id/message',       rateLimit, injectionDetection, piiAudit, messagesRouter);
+app.use('/projects/:id/message',       rateLimit, costCapCheck, injectionDetection, piiAudit, messagesRouter);
 app.use('/projects/:id/approve',       approveRouter);
 app.use('/projects/:id/retro',         retroRouter);
 app.use('/projects/:id/tasks',         tasksRouter);
-app.use('/projects/:id/transition',    transitionsRouter);
-app.use('/projects/:id/documents',     documentsRouter);
+app.use('/projects/:id/transition',    costCapCheck, transitionsRouter);
+app.use('/projects/:id/documents',     costCapCheck, documentsRouter);
 app.use('/projects/:id/raid',          raidRouter);
 app.use('/projects/:id/assignments',   assignmentsRouter);
 app.use('/registry',                   registryRouter);
@@ -70,8 +71,8 @@ app.use('/knowledge',                  knowledgeRouter);
 app.use('/projects/:id/workspace',     workspaceRouter);
 app.use('/telemetry',                  telemetryRouter);
 app.use('/projects/:id/brief',         briefRouter);
-app.use('/projects/:id/workroom',      injectionDetection, piiAudit, workroomRouter);
-app.use('/projects/:id/specialists',   injectionDetection, piiAudit, specialistsRouter);
+app.use('/projects/:id/workroom',      costCapCheck, injectionDetection, piiAudit, workroomRouter);
+app.use('/projects/:id/specialists',   costCapCheck, injectionDetection, piiAudit, specialistsRouter);
 app.use('/projects/:id/budgets',       budgetsRouter);
 app.use('/integrations',               integrationsRouter);
 app.use('/ab',                         abRouter);

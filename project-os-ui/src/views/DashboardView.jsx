@@ -8,14 +8,17 @@ export function GuidedStageCard({ project, state, transition, setView, transitio
   const stage = project?.stage
   if (!stage) return null
 
-  const allTasks     = (state?.phases ?? []).flatMap(p => p.milestones ?? []).flatMap(m => m.tasks ?? [])
-  const doneTasks    = allTasks.filter(t => t.status === 'done').length
-  const totalTasks   = allTasks.length
-  const allMilestones = (state?.phases ?? []).flatMap(p => p.milestones ?? [])
-  const allMsDone    = allMilestones.length > 0 && allMilestones.every(m =>
+  const allMilestones  = (state?.phases ?? []).flatMap(p => p.milestones ?? [])
+  const allTasks       = allMilestones.flatMap(m => m.tasks ?? [])
+  const doneTasks      = allTasks.filter(t => t.status === 'done').length
+  const totalTasks     = allTasks.length
+  const allMsDone      = allMilestones.length > 0 && allMilestones.every(m =>
     m.completed_at != null ||
     ((m.tasks ?? []).length > 0 && (m.tasks ?? []).every(t => t.status === 'done'))
   )
+  // Current milestone = first with tasks that hasn't been completed yet
+  const currentMs      = allMilestones.find(m => !m.completed_at && (m.tasks ?? []).length > 0)
+  const currentMsDone  = currentMs != null && (currentMs.tasks ?? []).every(t => t.status === 'done')
 
   if (stage === 'intake') {
     return (
@@ -68,13 +71,18 @@ export function GuidedStageCard({ project, state, transition, setView, transitio
     return null
   }
 
-  if (stage === 'execution' && totalTasks > 0 && doneTasks === totalTasks) {
+  if (stage === 'execution' && (allMsDone || currentMsDone)) {
+    const isShip = allMsDone
     return (
       <div className="action-strip action-strip--green">
-        <span className="action-strip__icon">🎉</span>
-        <span className="action-strip__text">{allMsDone ? 'Every milestone is done — run the ship retro to close the project.' : 'All tasks in this milestone are done — run a retro before the next milestone.'}</span>
-        <button className="action-strip__btn" disabled={transitioning} onClick={() => transition(allMsDone ? 'ship_retro' : 'milestone_retro')}>
-          {transitioning ? 'Starting…' : allMsDone ? 'Ship retro →' : 'Milestone retro →'}
+        <span className="action-strip__icon">{isShip ? '🚀' : '✓'}</span>
+        <span className="action-strip__text">
+          {isShip
+            ? 'Every milestone is done — run the ship retro to close the project.'
+            : `"${currentMs?.title ?? 'Milestone'}" tasks are all done — run a retro before unlocking the next milestone.`}
+        </span>
+        <button className="action-strip__btn" disabled={transitioning} onClick={() => transition(isShip ? 'ship_retro' : 'milestone_retro')}>
+          {transitioning ? 'Starting…' : isShip ? 'Ship retro →' : 'Milestone retro →'}
         </button>
       </div>
     )

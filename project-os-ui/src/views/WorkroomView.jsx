@@ -127,7 +127,10 @@ export default function WorkroomView({ projectId, project }) {
           {logLoading
             ? <div className="wr__loading">Loading…</div>
             : entries.length === 0
-              ? <div className="wr__empty">No activity yet. Events from agents and your actions appear here.</div>
+              ? <div className="wr__empty">
+                  <strong style={{ display: 'block', marginBottom: 6, color: 'var(--ink)' }}>Activity Timeline</strong>
+                  Agent actions, scope changes, and your notes all stream here automatically. Use the <strong>+</strong> button to add a manual note to the project record.
+                </div>
               : entries.map(e => <LogEntry key={e.id} entry={e} />)
           }
         </div>
@@ -152,7 +155,10 @@ export default function WorkroomView({ projectId, project }) {
           {chatLoading
             ? <div className="wr__loading">Loading…</div>
             : messages.length === 0
-              ? <div className="wr__empty">Start a conversation with the {agent}.</div>
+              ? <div className="wr__empty">
+                  <strong style={{ display: 'block', marginBottom: 6, color: 'var(--ink)' }}>Ad-hoc AI Consultant</strong>
+                  Unlike the main agent (which follows your project stage), these agents are always available. Ask the <strong>planner</strong> about priorities, the <strong>risk-advisor</strong> about threats, or the <strong>execution-coach</strong> about velocity and blockers — at any point in the project.
+                </div>
               : messages.map(m => <ChatMessage key={m.id} msg={m} />)
           }
           <div ref={chatEndRef} />

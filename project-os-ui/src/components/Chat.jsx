@@ -12,10 +12,24 @@ function stripJSON(content) {
     .trim()
 }
 
+function renderLine(line) {
+  // Parse inline markdown: **bold**, *italic*, and plain text segments
+  const parts = []
+  const re = /(\*\*([^*]+)\*\*|\*([^*]+)\*)/g
+  let last = 0, m
+  while ((m = re.exec(line)) !== null) {
+    if (m.index > last) parts.push(line.slice(last, m.index))
+    if (m[2]) parts.push(<strong key={m.index}>{m[2]}</strong>)
+    else if (m[3]) parts.push(<em key={m.index}>{m[3]}</em>)
+    last = m.index + m[0].length
+  }
+  if (last < line.length) parts.push(line.slice(last))
+  return parts
+}
+
 function Message({ msg }) {
   const isUser   = msg.role === 'user'
   const isSystem = msg.role === 'system'
-  // Derive a human-readable agent label from the message's agent field or context
   const agentLabel = msg.agent
     ? { intake: 'Intake', planning: 'Planning', execution: 'Execution', retro: 'Retro' }[msg.agent] ?? 'Agent'
     : 'Agent'
@@ -40,9 +54,16 @@ function Message({ msg }) {
         {time && <span className="msg__time">{time}</span>}
       </div>
       <div className="msg__bubble">
-        {content.split('\n').filter(Boolean).map((line, i) => (
-          <p key={i} className="msg__line">{line}</p>
-        ))}
+        {content.split('\n').filter(Boolean).map((line, i) => {
+          const isBullet = line.startsWith('- ') || line.startsWith('• ')
+          const text = isBullet ? line.slice(2) : line
+          return (
+            <p key={i} className={`msg__line${isBullet ? ' msg__line--bullet' : ''}`}>
+              {isBullet && <span className="msg__bullet">·</span>}
+              {renderLine(text)}
+            </p>
+          )
+        })}
       </div>
     </div>
   )

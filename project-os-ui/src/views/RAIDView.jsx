@@ -8,9 +8,17 @@ const RAID_TABS = [
   { id: 'decisions',   label: 'Decisions',   icon: '◉',  desc: 'Choices made' },
 ]
 
-const SEV = s => s >= 7 ? { label: 'HIGH',   color: 'var(--red)',   bg: 'rgba(240,80,80,.08)' }
-               : s >= 4 ? { label: 'MED',    color: 'var(--amber)', bg: 'rgba(240,160,48,.08)' }
+const SEV = s => s >= 7 ? { label: 'HIGH',   color: 'var(--red)',   bg: 'rgba(240,80,80,.06)' }
+               : s >= 4 ? { label: 'MED',    color: 'var(--amber)', bg: 'rgba(240,160,48,.06)' }
                :           { label: 'LOW',    color: 'var(--text-3)', bg: 'transparent' }
+
+const LI_LABEL = { low: 'L', medium: 'M', high: 'H' }
+
+const SOURCE_CFG = {
+  intake:    { label: 'Intake',    color: 'var(--blue)' },
+  planning:  { label: 'Planning',  color: 'var(--purple)' },
+  execution: { label: 'Execution', color: 'var(--green)' },
+}
 
 const RISK_STATUSES = ['open', 'mitigated', 'accepted', 'closed']
 const STATUS_CFG = {
@@ -243,13 +251,28 @@ export default function RAIDView({ projectId, state, refresh }) {
                 return [
                   <tr key={item.id} className={`raid-row${isExp ? ' raid-row--expanded' : ''}`} style={sev ? { background: sev.bg } : {}}>
                     {isRiskTab && tab !== 'assumptions' && <>
-                      <td className="risk-table__score" style={{ color: sev.color }}>{item.risk_score}/9</td>
+                      <td className="risk-table__score" style={{ color: sev.color }}>
+                        <div>{item.risk_score}/9</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>
+                          {LI_LABEL[item.likelihood] ?? '?'}×{LI_LABEL[item.impact] ?? '?'}
+                        </div>
+                      </td>
                       <td><span className="risk-table__sev" style={{ color: sev.color }}>{sev.label}</span></td>
                     </>}
                     <td className="risk-table__desc">
                       {tab === 'decisions'
                         ? <span className="decision-table__date">{new Date(item.decided_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
-                        : desc}
+                        : <>
+                            {desc}
+                            {item.source_agent && SOURCE_CFG[item.source_agent] && (
+                              <div style={{ marginTop: 4 }}>
+                                <span className="raid-source-chip" style={{ color: SOURCE_CFG[item.source_agent].color }}>
+                                  {SOURCE_CFG[item.source_agent].label}
+                                </span>
+                              </div>
+                            )}
+                          </>
+                      }
                       {tab === 'issues' && item.issue_description && <div style={{ fontSize: 11, color: 'var(--red)', marginTop: 3 }}>↳ {item.issue_description}</div>}
                     </td>
                     <td>
