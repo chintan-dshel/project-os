@@ -13,6 +13,7 @@
 import { Router }  from 'express';
 import { query, transaction } from '../db/pool.js';
 import { badRequest, notFound } from '../middleware/errors.js';
+import { assertProjectOwner } from '../lib/ownership.js';
 
 const router = Router({ mergeParams: true });
 
@@ -36,6 +37,7 @@ async function findTask(projectId, taskKey) {
 router.patch('/:taskKey', async (req, res, next) => {
   try {
     const { id: projectId, taskKey } = req.params;
+    await assertProjectOwner(projectId, req.user.id);
     const { status, actual_hours, notes } = req.body ?? {};
 
     const task = await findTask(projectId, taskKey);
@@ -92,6 +94,7 @@ router.patch('/:taskKey', async (req, res, next) => {
 router.post('/:taskKey/comments', async (req, res, next) => {
   try {
     const { id: projectId, taskKey } = req.params;
+    await assertProjectOwner(projectId, req.user.id);
     const { comment } = req.body ?? {};
 
     if (!comment?.trim()) throw badRequest('comment is required');

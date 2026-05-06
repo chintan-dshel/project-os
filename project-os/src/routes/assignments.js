@@ -7,6 +7,7 @@ import { Router }                    from 'express'
 import pool, { query }               from '../db/pool.js'
 import { triggerAssignmentAnalysis } from '../lib/assignment.analysis.js'
 import { runRegistryAgent, runSpecialistAgent } from '../lib/specialist.agent.js'
+import { assertProjectOwner } from '../lib/ownership.js'
 
 const router = Router({ mergeParams: true })
 
@@ -14,6 +15,7 @@ const router = Router({ mergeParams: true })
 // Manual trigger: always bypasses cooldown so the user gets immediate feedback
 router.post('/analyze', async (req, res, next) => {
   try {
+    await assertProjectOwner(req.params.id, req.user.id)
     const result = await triggerAssignmentAnalysis(req.params.id, { force: true })
     // Return pending assignments after analysis
     const { rows } = await pool.query(
@@ -32,6 +34,7 @@ router.post('/analyze', async (req, res, next) => {
 // GET /projects/:id/assignments — list assignments with optional status filter
 router.get('/', async (req, res, next) => {
   try {
+    await assertProjectOwner(req.params.id, req.user.id)
     const { status } = req.query
     const { rows } = await pool.query(
       `SELECT aa.*, ar.name AS agent_name, ar.icon AS agent_icon, ar.slug AS agent_slug,
@@ -52,6 +55,7 @@ router.get('/', async (req, res, next) => {
 router.patch('/:assignmentId', async (req, res, next) => {
   const { status, user_edited_prompt, rejection_reason } = req.body
   try {
+    await assertProjectOwner(req.params.id, req.user.id)
     const sets = ['updated_at = now()']
     const vals = []
     let n = 1
@@ -72,6 +76,7 @@ router.patch('/:assignmentId', async (req, res, next) => {
 // POST /projects/:id/assignments/:assignmentId/run — run the assigned agent
 router.post('/:assignmentId/run', async (req, res, next) => {
   try {
+    await assertProjectOwner(req.params.id, req.user.id)
     // Fetch the assignment with registry agent info
     const { rows: [assignment] } = await pool.query(
       `SELECT aa.*, ar.slug AS agent_slug

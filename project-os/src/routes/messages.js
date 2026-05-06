@@ -9,12 +9,14 @@ import { runWithOrchestration }  from '../lib/orchestrator.js';
 import { runGate } from '../middleware/gates.js';
 import { query }   from '../db/pool.js';
 import { badRequest, notFound } from '../middleware/errors.js';
+import { assertProjectOwner } from '../lib/ownership.js';
 
 const router = Router({ mergeParams: true });
 
 router.post('/', async (req, res, next) => {
   try {
     const { id } = req.params;
+    await assertProjectOwner(id, req.user.id);
     const { message } = req.body;
 
     if (!message || typeof message !== 'string' || !message.trim()) {

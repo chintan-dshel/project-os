@@ -12,6 +12,7 @@
 import { Router } from 'express'
 import { query }  from '../db/pool.js'
 import { badRequest } from '../middleware/errors.js'
+import { assertProjectOwner } from '../lib/ownership.js'
 
 const router = Router({ mergeParams: true })
 
@@ -20,6 +21,7 @@ const router = Router({ mergeParams: true })
 router.get('/', async (req, res, next) => {
   try {
     const { id: projectId } = req.params
+    await assertProjectOwner(projectId, req.user.id)
 
     const { rows: budgets } = await query(
       `SELECT pab.*,
@@ -65,6 +67,7 @@ router.get('/', async (req, res, next) => {
 router.put('/:slug', async (req, res, next) => {
   try {
     const { id: projectId, slug: agentSlug } = req.params
+    await assertProjectOwner(projectId, req.user.id)
     const { daily_limit_usd, monthly_limit_usd, enabled } = req.body ?? {}
 
     const { rows: [budget] } = await query(
@@ -95,6 +98,7 @@ router.put('/:slug', async (req, res, next) => {
 router.get('/kill-switch', async (req, res, next) => {
   try {
     const { id: projectId } = req.params
+    await assertProjectOwner(projectId, req.user.id)
 
     const { rows: [active] } = await query(
       `SELECT * FROM agent_kill_switch
@@ -112,6 +116,7 @@ router.get('/kill-switch', async (req, res, next) => {
 router.post('/kill-switch', async (req, res, next) => {
   try {
     const { id: projectId } = req.params
+    await assertProjectOwner(projectId, req.user.id)
     const { reason } = req.body ?? {}
     const userId = req.user?.id ?? null
 
@@ -137,6 +142,7 @@ router.post('/kill-switch', async (req, res, next) => {
 router.delete('/kill-switch', async (req, res, next) => {
   try {
     const { id: projectId } = req.params
+    await assertProjectOwner(projectId, req.user.id)
 
     await query(
       `UPDATE agent_kill_switch SET resumed_at = now()

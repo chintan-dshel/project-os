@@ -35,6 +35,7 @@ import {
 import { findProjectById } from '../db/projects.queries.js';
 import { query }           from '../db/pool.js';
 import { badRequest, notFound } from '../middleware/errors.js';
+import { assertProjectOwner } from '../lib/ownership.js';
 
 const router = Router({ mergeParams: true });
 
@@ -58,6 +59,7 @@ router.post('/delegate', async (req, res, next) => {
   try {
     await checkSpecialistTable();
     const { id: projectId } = req.params;
+    await assertProjectOwner(projectId, req.user.id);
     const { task_key, specialist_type, brief } = req.body ?? {};
 
     if (!task_key)         throw badRequest('task_key is required');
@@ -95,6 +97,7 @@ router.post('/delegate', async (req, res, next) => {
 router.post('/:outputId/approve', async (req, res, next) => {
   try {
     const { id: projectId, outputId } = req.params;
+    await assertProjectOwner(projectId, req.user.id);
     const result = await approveSpecialistOutput(projectId, outputId);
     return res.json({ output: result });
   } catch (err) { next(err); }
@@ -105,6 +108,7 @@ router.post('/:outputId/approve', async (req, res, next) => {
 router.post('/:outputId/reject', async (req, res, next) => {
   try {
     const { id: projectId, outputId } = req.params;
+    await assertProjectOwner(projectId, req.user.id);
     const { feedback } = req.body ?? {};
     const result = await rejectSpecialistOutput(projectId, outputId, feedback);
     return res.json({ output: result });
@@ -116,6 +120,7 @@ router.post('/:outputId/reject', async (req, res, next) => {
 router.post('/:outputId/revise', async (req, res, next) => {
   try {
     const { id: projectId, outputId } = req.params;
+    await assertProjectOwner(projectId, req.user.id);
     const { additional_brief } = req.body ?? {};
     if (!additional_brief?.trim()) throw badRequest('additional_brief is required');
 
@@ -161,6 +166,7 @@ router.get('/', async (req, res, next) => {
   try {
     await checkSpecialistTable();
     const { id: projectId } = req.params;
+    await assertProjectOwner(projectId, req.user.id);
     const outputs = await getSpecialistOutputsForProject(projectId);
     return res.json({ outputs });
   } catch (err) { next(err); }
@@ -171,6 +177,7 @@ router.get('/', async (req, res, next) => {
 router.get('/:outputId', async (req, res, next) => {
   try {
     const { id: projectId, outputId } = req.params;
+    await assertProjectOwner(projectId, req.user.id);
     const { rows: [output] } = await query(
       `SELECT so.*, t.title AS task_title
        FROM specialist_outputs so

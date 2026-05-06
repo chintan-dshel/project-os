@@ -14,6 +14,7 @@
 import { Router } from 'express'
 import { query }  from '../db/pool.js'
 import { badRequest, notFound } from '../middleware/errors.js'
+import { assertProjectOwner } from '../lib/ownership.js'
 import { populateFromDecision } from '../lib/knowledge.js'
 
 const router = Router({ mergeParams: true })
@@ -30,6 +31,7 @@ async function hasEntryTypeColumn() {
 router.patch('/risks/:riskId', async (req, res, next) => {
   try {
     const { id: projectId, riskId } = req.params
+    await assertProjectOwner(projectId, req.user.id)
     const { status, mitigation, contingency, owner, entry_type } = req.body ?? {}
 
     const { rows: [existing] } = await query(
@@ -65,6 +67,7 @@ router.patch('/risks/:riskId', async (req, res, next) => {
 router.post('/risks/:riskId/materialise', async (req, res, next) => {
   try {
     const { id: projectId, riskId } = req.params
+    await assertProjectOwner(projectId, req.user.id)
     const { issue_description } = req.body ?? {}
 
     if (!issue_description?.trim()) throw badRequest('issue_description is required')
@@ -109,6 +112,7 @@ router.post('/risks/:riskId/materialise', async (req, res, next) => {
 router.post('/issues/:riskId/decide', async (req, res, next) => {
   try {
     const { id: projectId, riskId } = req.params
+    await assertProjectOwner(projectId, req.user.id)
     const { decision, rationale, outcome } = req.body ?? {}
 
     if (!decision?.trim()) throw badRequest('decision is required')
@@ -149,6 +153,7 @@ router.post('/issues/:riskId/decide', async (req, res, next) => {
 router.post('/issues/:riskId/action', async (req, res, next) => {
   try {
     const { id: projectId, riskId } = req.params
+    await assertProjectOwner(projectId, req.user.id)
     const { milestone_id, title, description, estimated_hours, priority } = req.body ?? {}
 
     if (!title?.trim()) throw badRequest('title is required')
@@ -182,6 +187,7 @@ router.post('/issues/:riskId/action', async (req, res, next) => {
 router.post('/decisions', async (req, res, next) => {
   try {
     const { id: projectId } = req.params
+    await assertProjectOwner(projectId, req.user.id)
     const { decision, rationale, outcome, source_risk_id } = req.body ?? {}
 
     if (!decision?.trim()) throw badRequest('decision is required')
@@ -209,6 +215,7 @@ router.post('/decisions', async (req, res, next) => {
 router.post('/risks', async (req, res, next) => {
   try {
     const { id: projectId } = req.params
+    await assertProjectOwner(projectId, req.user.id)
     const {
       entry_type = 'risk', description, likelihood = 'medium', impact = 'medium',
       risk_score, mitigation, contingency, owner = 'founder'

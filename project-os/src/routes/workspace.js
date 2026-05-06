@@ -12,6 +12,7 @@
 import { Router } from 'express'
 import { query }  from '../db/pool.js'
 import { badRequest, notFound } from '../middleware/errors.js'
+import { assertProjectOwner } from '../lib/ownership.js'
 import { addKnowledgeEntry } from '../lib/knowledge.js'
 
 const router = Router({ mergeParams: true })
@@ -23,6 +24,7 @@ const VALID_TYPES = ['note', 'research', 'spec', 'code', 'report', 'agent_output
 router.get('/', async (req, res, next) => {
   try {
     const { id: projectId } = req.params
+    await assertProjectOwner(projectId, req.user.id)
     const { type, task_key } = req.query
 
     const conditions = ['project_id = $1']
@@ -57,6 +59,7 @@ router.get('/', async (req, res, next) => {
 router.post('/', async (req, res, next) => {
   try {
     const { id: projectId } = req.params
+    await assertProjectOwner(projectId, req.user.id)
     const { type, title, content, task_key, task_title, created_by, agent_slug, tags } = req.body ?? {}
 
     if (!title?.trim())   throw badRequest('title is required')
@@ -90,6 +93,7 @@ router.post('/', async (req, res, next) => {
 router.patch('/:docId', async (req, res, next) => {
   try {
     const { id: projectId, docId } = req.params
+    await assertProjectOwner(projectId, req.user.id)
     const { title, content, type, tags } = req.body ?? {}
 
     const { rows: [existing] } = await query(
@@ -122,6 +126,7 @@ router.patch('/:docId', async (req, res, next) => {
 router.delete('/:docId', async (req, res, next) => {
   try {
     const { id: projectId, docId } = req.params
+    await assertProjectOwner(projectId, req.user.id)
 
     const { rows } = await query(
       `DELETE FROM workspace_docs WHERE id = $1 AND project_id = $2 RETURNING id`,
@@ -138,6 +143,7 @@ router.delete('/:docId', async (req, res, next) => {
 router.post('/:docId/to-knowledge', async (req, res, next) => {
   try {
     const { id: projectId, docId } = req.params
+    await assertProjectOwner(projectId, req.user.id)
     const { type: knowledgeType } = req.body ?? {}
 
     const { rows: [doc] } = await query(

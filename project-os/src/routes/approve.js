@@ -3,6 +3,7 @@ import { transaction } from '../db/pool.js';
 import { findProjectById, approveProject, insertDecision } from '../db/projects.queries.js';
 import { appendMessage } from '../db/conversations.queries.js';
 import { notFound, conflict } from '../middleware/errors.js';
+import { assertProjectOwner } from '../lib/ownership.js';
 
 const router = Router({ mergeParams: true });
 
@@ -27,6 +28,7 @@ const router = Router({ mergeParams: true });
 router.put('/', async (req, res, next) => {
   try {
     const { id } = req.params;
+    await assertProjectOwner(id, req.user.id);
     const { confirmed, notes } = req.body ?? {};
 
     // Load project first for a clear error message

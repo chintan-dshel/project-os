@@ -20,6 +20,7 @@ import { Router } from 'express';
 import { query } from '../db/pool.js';
 import { callClaude } from '../lib/anthropic.js';
 import { notFound, badRequest } from '../middleware/errors.js';
+import { assertProjectOwner } from '../lib/ownership.js';
 
 const router = Router({ mergeParams: true });
 
@@ -259,6 +260,7 @@ const DOC_TYPES = [
 router.get('/', async (req, res, next) => {
   try {
     const { id } = req.params
+    await assertProjectOwner(id, req.user.id)
     const { rows: [p] } = await query(`SELECT stage FROM projects WHERE id = $1`, [id])
     if (!p) throw notFound('Project not found')
 
@@ -281,6 +283,7 @@ router.get('/', async (req, res, next) => {
 router.get('/generated', async (req, res, next) => {
   try {
     const { id } = req.params
+    await assertProjectOwner(id, req.user.id)
     const { rows } = await query(
       `SELECT id, doc_type, title, generated_at, milestone_id
        FROM generated_documents WHERE project_id = $1 ORDER BY generated_at DESC`,
@@ -294,6 +297,7 @@ router.get('/generated', async (req, res, next) => {
 router.post('/generate', async (req, res, next) => {
   try {
     const { id } = req.params
+    await assertProjectOwner(id, req.user.id)
     const { type } = req.body
     if (!type) throw badRequest('type is required (milestone-report | close-report)')
 
@@ -412,6 +416,7 @@ Format as:
 router.get('/:type', async (req, res, next) => {
   try {
     const { id, type } = req.params
+    await assertProjectOwner(id, req.user.id)
     const { rows: [p] } = await query(`SELECT id FROM projects WHERE id = $1`, [id])
     if (!p) throw notFound('Project not found')
 

@@ -12,6 +12,7 @@ import { Router }    from 'express'
 import { query }     from '../db/pool.js'
 import { callClaude } from '../lib/anthropic.js'
 import { badRequest, notFound } from '../middleware/errors.js'
+import { assertProjectOwner } from '../lib/ownership.js'
 import { findProjectById } from '../db/projects.queries.js'
 
 const router = Router({ mergeParams: true })
@@ -23,6 +24,7 @@ const LOG_PAGE = 50
 router.get('/log', async (req, res, next) => {
   try {
     const { id: projectId } = req.params
+    await assertProjectOwner(projectId, req.user.id)
     const limit  = Math.min(parseInt(req.query.limit  ?? LOG_PAGE, 10), 200)
     const before = req.query.before ?? null
 
@@ -52,6 +54,7 @@ router.get('/log', async (req, res, next) => {
 router.post('/log', async (req, res, next) => {
   try {
     const { id: projectId } = req.params
+    await assertProjectOwner(projectId, req.user.id)
     const { kind, author, body, delta_summary, source_ref } = req.body ?? {}
 
     if (!body?.trim()) throw badRequest('body is required')
@@ -85,6 +88,7 @@ router.post('/log', async (req, res, next) => {
 router.get('/chat/:agent', async (req, res, next) => {
   try {
     const { id: projectId, agent: agentName } = req.params
+    await assertProjectOwner(projectId, req.user.id)
     const limit = Math.min(parseInt(req.query.limit ?? 40, 10), 100)
 
     // Get or create thread
@@ -114,6 +118,7 @@ router.get('/chat/:agent', async (req, res, next) => {
 router.post('/chat/:agent', async (req, res, next) => {
   try {
     const { id: projectId, agent: agentName } = req.params
+    await assertProjectOwner(projectId, req.user.id)
     const { message } = req.body ?? {}
 
     if (!message?.trim()) throw badRequest('message is required')

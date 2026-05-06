@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { findProjectById, findRetrosByProject } from '../db/projects.queries.js';
 import { query } from '../db/pool.js';
 import { notFound } from '../middleware/errors.js';
+import { assertProjectOwner } from '../lib/ownership.js';
 
 const router = Router({ mergeParams: true });
 
@@ -24,6 +25,7 @@ const router = Router({ mergeParams: true });
 router.get('/', async (req, res, next) => {
   try {
     const { id } = req.params;
+    await assertProjectOwner(id, req.user.id);
     const { type, latest } = req.query;
 
     const project = await findProjectById(id);
@@ -94,6 +96,7 @@ router.get('/', async (req, res, next) => {
 router.get('/v2-backlog', async (req, res, next) => {
   try {
     const { id } = req.params;
+    await assertProjectOwner(id, req.user.id);
     const { rows: backlog } = await query(
       `SELECT * FROM v2_backlog WHERE project_id = $1 ORDER BY retro_id, id`,
       [id],

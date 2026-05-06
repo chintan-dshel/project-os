@@ -11,6 +11,7 @@
 import { Router } from 'express'
 import { query }  from '../db/pool.js'
 import { badRequest, notFound } from '../middleware/errors.js'
+import { assertProjectOwner } from '../lib/ownership.js'
 
 const router = Router({ mergeParams: true })
 
@@ -33,6 +34,7 @@ async function getOrCreateBrief(projectId) {
 router.get('/', async (req, res, next) => {
   try {
     const { id: projectId } = req.params
+    await assertProjectOwner(projectId, req.user.id)
     const brief = await getOrCreateBrief(projectId)
 
     const { rows: versions } = await query(
@@ -70,6 +72,7 @@ router.get('/', async (req, res, next) => {
 router.post('/versions', async (req, res, next) => {
   try {
     const { id: projectId } = req.params
+    await assertProjectOwner(projectId, req.user.id)
     const { sections, change_note, author_kind, agent_name } = req.body ?? {}
 
     if (!Array.isArray(sections)) throw badRequest('sections must be an array')
@@ -110,6 +113,7 @@ router.post('/versions', async (req, res, next) => {
 router.get('/versions/:vid', async (req, res, next) => {
   try {
     const { id: projectId, vid } = req.params
+    await assertProjectOwner(projectId, req.user.id)
 
     const { rows: [vrow] } = await query(
       `SELECT bv.* FROM brief_versions bv
@@ -128,6 +132,7 @@ router.get('/versions/:vid', async (req, res, next) => {
 router.post('/versions/:vid/approve', async (req, res, next) => {
   try {
     const { id: projectId, vid } = req.params
+    await assertProjectOwner(projectId, req.user.id)
     const userId = req.user?.id ?? null
 
     const { rows: [vrow] } = await query(

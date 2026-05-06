@@ -10,6 +10,7 @@ import {
   insertOpenQuestions,
 } from '../db/projects.queries.js';
 import { badRequest, notFound } from '../middleware/errors.js';
+import { assertProjectOwner } from '../lib/ownership.js';
 
 const router = Router();
 
@@ -116,6 +117,7 @@ router.post('/', async (req, res, next) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/:id', async (req, res, next) => {
   try {
+    await assertProjectOwner(req.params.id, req.user.id);
     const [brief, state] = await Promise.all([
       findProjectById(req.params.id),
       findProjectState(req.params.id),
@@ -136,8 +138,8 @@ router.get('/:id', async (req, res, next) => {
 router.post('/:id/archive', async (req, res, next) => {
   try {
     const { rows } = await query(
-      `UPDATE projects SET is_archived=TRUE, archived_at=now() WHERE id=$1 RETURNING id, title, is_archived, archived_at`,
-      [req.params.id],
+      `UPDATE projects SET is_archived=TRUE, archived_at=now() WHERE id=$1 AND user_id=$2 RETURNING id, title, is_archived, archived_at`,
+      [req.params.id, req.user.id],
     )
     if (!rows[0]) return res.status(404).json({ error: 'Project not found' })
     res.json({ project: rows[0] })
@@ -148,8 +150,8 @@ router.post('/:id/archive', async (req, res, next) => {
 router.post('/:id/unarchive', async (req, res, next) => {
   try {
     const { rows } = await query(
-      `UPDATE projects SET is_archived=FALSE, archived_at=NULL WHERE id=$1 RETURNING id, title, is_archived`,
-      [req.params.id],
+      `UPDATE projects SET is_archived=FALSE, archived_at=NULL WHERE id=$1 AND user_id=$2 RETURNING id, title, is_archived`,
+      [req.params.id, req.user.id],
     )
     if (!rows[0]) return res.status(404).json({ error: 'Project not found' })
     res.json({ project: rows[0] })
@@ -159,8 +161,8 @@ router.post('/:id/unarchive', async (req, res, next) => {
 router.delete('/:id', async (req, res, next) => {
   try {
     const { rows } = await query(
-      `DELETE FROM projects WHERE id=$1 RETURNING id`,
-      [req.params.id],
+      `DELETE FROM projects WHERE id=$1 AND user_id=$2 RETURNING id`,
+      [req.params.id, req.user.id],
     )
     if (!rows[0]) return res.status(404).json({ error: 'Project not found' })
     res.json({ deleted: true, id: rows[0].id })
