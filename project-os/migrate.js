@@ -46,15 +46,24 @@ for (const file of files) {
   }
 
   const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+  // Postgres forbids using a newly-added enum value in the same transaction
+  // where ADD VALUE ran. Detect this case and skip the transaction wrapper so
+  // each statement auto-commits, making new values visible to later statements.
+  const needsAutocommit = /ALTER\s+TYPE\s+\S+\s+ADD\s+VALUE/i.test(sql);
   try {
-    await client.query('BEGIN');
-    await client.query(sql);
-    await client.query(`INSERT INTO _migrations (filename) VALUES ($1)`, [file]);
-    await client.query('COMMIT');
+    if (needsAutocommit) {
+      await client.query(sql);
+      await client.query(`INSERT INTO _migrations (filename) VALUES ($1)`, [file]);
+    } else {
+      await client.query('BEGIN');
+      await client.query(sql);
+      await client.query(`INSERT INTO _migrations (filename) VALUES ($1)`, [file]);
+      await client.query('COMMIT');
+    }
     console.log(`✓     ${file}`);
     ran++;
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (!needsAutocommit) await client.query('ROLLBACK');
     console.error(`✗     ${file}\n      ${err.message}`);
     process.exit(1);
   }
