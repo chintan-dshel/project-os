@@ -70,10 +70,15 @@ router.post('/', async (req, res, next) => {
     });
 
     // 8. Stage advance guard
+    const VALID_STAGES = new Set(['intake', 'planning', 'awaiting_approval', 'execution', 'milestone_retro', 'ship_retro', 'complete']);
     if (agentResponse.advance_stage) {
-      const fresh = await findProjectById(id);
-      if (fresh && fresh.stage !== agentResponse.advance_stage) {
-        await updateProjectStage(id, agentResponse.advance_stage);
+      if (!VALID_STAGES.has(agentResponse.advance_stage)) {
+        console.warn('[messages] agent returned invalid advance_stage, ignoring:', agentResponse.advance_stage);
+      } else {
+        const fresh = await findProjectById(id);
+        if (fresh && fresh.stage !== agentResponse.advance_stage) {
+          await updateProjectStage(id, agentResponse.advance_stage);
+        }
       }
     }
 
