@@ -32,6 +32,10 @@ router.get('/', async (req, res, next) => {
       throw badRequest(`type must be one of: ${VALID_TYPES.join(', ')}`)
     }
 
+    if (project_id) {
+      await assertProjectOwner(project_id, req.user.id)
+    }
+
     const entries = await searchKnowledge({
       q:         q ?? null,
       type:      type ?? null,
