@@ -102,8 +102,11 @@ export function GuidedStageCard({ project, state, transition, setView, transitio
     return (
       <div className="action-strip action-strip--amber">
         <span className="action-strip__icon">🚀</span>
-        <span className="action-strip__text">Ship retro in progress — five questions about what you built, learned, and what goes in the v2 backlog.</span>
-        <button className="action-strip__btn" onClick={onOpenChat}>Continue →</button>
+        <span className="action-strip__text">Ship retro in progress — answer the agent's questions. When you're done, close the project to generate the close report.</span>
+        <button className="action-strip__btn action-strip__btn--ghost" onClick={onOpenChat} style={{ marginRight: 6 }}>Continue chat →</button>
+        <button className="action-strip__btn" disabled={transitioning} onClick={() => transition('complete')}>
+          {transitioning ? 'Closing…' : 'Close project →'}
+        </button>
       </div>
     )
   }

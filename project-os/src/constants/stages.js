@@ -12,4 +12,4 @@
  * action. Allowing them as transition targets would let users bypass the
  * agent flow and send a project backward or into a state it has not earned.
  */
-export const TRANSITION_STAGES = ['execution', 'milestone_retro', 'ship_retro']
+export const TRANSITION_STAGES = ['execution', 'milestone_retro', 'ship_retro', 'complete']
