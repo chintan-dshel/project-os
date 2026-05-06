@@ -47,12 +47,19 @@ for (const file of files) {
 
   const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
   // Postgres forbids using a newly-added enum value in the same transaction
-  // where ADD VALUE ran. Detect this case and skip the transaction wrapper so
-  // each statement auto-commits, making new values visible to later statements.
+  // where ADD VALUE ran. Detect this case: split the file into individual
+  // statements and execute each one separately so every ADD VALUE auto-commits
+  // before the next statement runs and can see the new enum value.
   const needsAutocommit = /ALTER\s+TYPE\s+\S+\s+ADD\s+VALUE/i.test(sql);
   try {
     if (needsAutocommit) {
-      await client.query(sql);
+      const statements = sql
+        .split(';')
+        .map(s => s.split('\n').filter(l => !l.trim().startsWith('--')).join('\n').trim())
+        .filter(s => s.length > 0);
+      for (const stmt of statements) {
+        await client.query(stmt);
+      }
       await client.query(`INSERT INTO _migrations (filename) VALUES ($1)`, [file]);
     } else {
       await client.query('BEGIN');
