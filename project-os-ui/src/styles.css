@@ -3837,3 +3837,75 @@ input,textarea { font:inherit; color:inherit; background:none; border:none; outl
 .ab__cell--red { color: var(--red); }
 .ab__loading { color: var(--mut); font-size: 13px; }
 .ab__error { color: var(--red); font-size: 12px; }
+
+/* ── Workroom log entries (wrl-) ───────────────────────────────── */
+.wrl-entry { display: flex; gap: 10px; }
+.wrl-entry__rail { display: flex; flex-direction: column; align-items: center; width: 12px; flex-shrink: 0; padding-top: 4px; }
+.wrl-entry__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink); flex-shrink: 0; }
+.wrl-entry__dot--agent { background: var(--teal); }
+.wrl-entry__dot--sys   { background: var(--mut-2); }
+.wrl-entry__line { width: 1px; flex: 1; background: var(--line); margin-top: 4px; min-height: 14px; }
+.wrl-entry__body { flex: 1; padding-bottom: 14px; }
+.wrl-entry__head { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+.wrl-entry__who { font-size: 11px; font-weight: 600; color: var(--ink); }
+.wrl-entry__who--agent { color: var(--teal-2); }
+.wrl-entry__time { font-family: var(--mono); font-size: 9px; color: var(--mut-2); margin-left: auto; }
+.wrl-entry__text { font-size: 12px; color: var(--ink-2); line-height: 1.5; }
+.wrl-entry__delta { font-family: var(--mono); font-size: 10px; color: var(--teal-2); margin-top: 4px; background: var(--teal-bg); display: inline-block; padding: 2px 7px; border-radius: 8px; }
+.wrl-empty { padding: 32px 16px; text-align: center; }
+.wrl-empty__icon { font-size: 22px; color: var(--mut-2); margin-bottom: 8px; }
+.wrl-empty__title { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+.wrl-empty__sub { font-size: 12px; color: var(--mut); line-height: 1.6; }
+
+/* ── Workroom chat — agent selector (wrc-) ─────────────────────── */
+.wrc-agents { display: flex; flex-direction: column; gap: 0; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+.wrc-agent-btn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border: none; border-left: 3px solid transparent;
+  background: transparent; cursor: pointer; text-align: left;
+  transition: background .12s, border-color .12s;
+  border-bottom: 0.5px solid var(--line);
+}
+.wrc-agent-btn:last-child { border-bottom: none; }
+.wrc-agent-btn:hover { background: var(--bg-2); }
+.wrc-agent-btn--active { border-left-color: currentColor; }
+.wrc-agent-btn__icon { font-size: 16px; flex-shrink: 0; width: 20px; text-align: center; color: var(--mut); }
+.wrc-agent-btn__name { font-size: 12px; font-weight: 600; color: var(--ink); }
+.wrc-agent-btn__role { font-family: var(--mono); font-size: 9px; color: var(--mut); letter-spacing: .04em; margin-top: 1px; }
+
+/* ── Workroom chat messages (wrc-msg-) ─────────────────────────── */
+.wrc-msg { display: flex; gap: 8px; align-items: flex-start; }
+.wrc-msg--user { flex-direction: row-reverse; }
+.wrc-msg--agent { }
+.wrc-msg__avatar {
+  width: 28px; height: 28px; border-radius: var(--r); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+}
+.wrc-msg__bubble { display: flex; flex-direction: column; gap: 3px; max-width: 85%; }
+.wrc-msg--user .wrc-msg__bubble { align-items: flex-end; }
+.wrc-msg__content {
+  padding: 9px 12px; border-radius: var(--r); font-size: 13px; line-height: 1.55;
+}
+.wrc-msg--user  .wrc-msg__content { background: var(--ink); color: var(--bg); border-bottom-right-radius: 3px; }
+.wrc-msg--agent .wrc-msg__content { background: var(--bg-2); border: 0.5px solid var(--line); color: var(--ink-2); border-bottom-left-radius: 3px; }
+.wrc-msg--agent .wrc-msg__content .doc-h1,
+.wrc-msg--agent .wrc-msg__content .doc-h2,
+.wrc-msg--agent .wrc-msg__content .doc-h3 { color: var(--ink); }
+.wrc-msg--agent .wrc-msg__content .doc-p,
+.wrc-msg--agent .wrc-msg__content .doc-li,
+.wrc-msg--agent .wrc-msg__content .doc-ol-li { font-size: 13px; color: var(--ink-2); }
+.wrc-msg__time { font-family: var(--mono); font-size: 9px; color: var(--mut-2); padding: 0 2px; }
+
+/* ── Workroom chat — empty state ───────────────────────────────── */
+.wrc-empty { display: flex; flex-direction: column; align-items: center; padding: 32px 20px; gap: 6px; }
+.wrc-empty__icon { font-size: 28px; margin-bottom: 4px; }
+.wrc-empty__name { font-size: 15px; font-weight: 700; color: var(--ink); }
+.wrc-empty__role { font-family: var(--mono); font-size: 10px; color: var(--mut); letter-spacing: .04em; margin-bottom: 12px; }
+.wrc-empty__prompts { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 300px; }
+.wrc-empty__prompt {
+  padding: 8px 12px; border-radius: var(--r); border: 0.5px solid var(--line);
+  background: var(--bg-1); color: var(--ink-2); font-size: 12px; cursor: pointer;
+  text-align: left; line-height: 1.4; transition: background .12s, border-color .12s;
+}
+.wrc-empty__prompt:hover { background: var(--bg-3); border-color: var(--border-2); }

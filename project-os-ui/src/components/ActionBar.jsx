@@ -18,7 +18,7 @@ function getActiveStageIdx(backendStage) {
   return STAGES.findIndex(s => s.backendStages.includes(backendStage))
 }
 
-export default function ActionBar({ view, project, onNewCard }) {
+export default function ActionBar({ view, project }) {
   const activeIdx = getActiveStageIdx(project?.stage)
 
   return (
@@ -39,36 +39,6 @@ export default function ActionBar({ view, project, onNewCard }) {
       </div>
 
       <div className="ab__view">{VIEW_TITLES[view] ?? view}</div>
-      <div className="ab__spacer" />
-
-      {view === 'dashboard' && (
-        <>
-          <button className="btn btn--ghost btn--small">Group · milestone</button>
-          <button className="btn btn--ghost btn--small">Filter</button>
-          <button className="btn btn--dark btn--small" onClick={onNewCard}>+ Card</button>
-        </>
-      )}
-      {view === 'workspace' && (
-        <>
-          <button className="btn btn--ghost btn--small">Today</button>
-          <button className="btn btn--dark btn--small">+ Check-in</button>
-        </>
-      )}
-      {view === 'brief' && (
-        <>
-          <button className="btn btn--ghost btn--small">History</button>
-          <button className="btn btn--ghost btn--small">Export</button>
-        </>
-      )}
-      {view === 'specialists' && (
-        <button className="btn btn--ghost btn--small">Logs</button>
-      )}
-      {view === 'raid' && (
-        <button className="btn btn--dark btn--small">+ Item</button>
-      )}
-      {view === 'docs' && (
-        <button className="btn btn--dark btn--small">+ Doc</button>
-      )}
     </div>
   )
 }
