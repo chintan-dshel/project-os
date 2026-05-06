@@ -15,6 +15,7 @@
 import { Router } from 'express'
 import { badRequest } from '../middleware/errors.js'
 import { addKnowledgeEntry, searchKnowledge } from '../lib/knowledge.js'
+import { assertProjectOwner } from '../lib/ownership.js'
 
 const router = Router()
 
@@ -58,6 +59,10 @@ router.post('/', async (req, res, next) => {
     }
     if (source_type && !VALID_SOURCES.includes(source_type)) {
       throw badRequest(`source_type must be one of: ${VALID_SOURCES.join(', ')}`)
+    }
+
+    if (project_id) {
+      await assertProjectOwner(project_id, req.user.id)
     }
 
     const entry = await addKnowledgeEntry({

@@ -18,7 +18,7 @@ function sha256(text) {
 }
 
 function extractUserText(req) {
-  return req.body?.message ?? req.body?.content ?? null;
+  return req.body?.message ?? req.body?.content ?? req.body?.brief ?? req.body?.additional_brief ?? null;
 }
 
 // ── Injection detection middleware ────────────────────────────────────────────
