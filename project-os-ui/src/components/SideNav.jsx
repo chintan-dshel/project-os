@@ -14,19 +14,28 @@ const NAV_GROUPS = [
     items: [
       { id: 'specialists',  label: 'Agents',          icon: '◆' },
       { id: 'telemetry',    label: 'Cost & Latency',  icon: '∿' },
-      { id: 'marketplace',  label: 'Marketplace',     icon: '⊞' },
     ],
   },
   {
     group: 'INSIGHTS',
     items: [
-      { id: 'analytics',    label: 'EVM',             icon: '$' },
-      { id: 'knowledge',    label: 'Knowledge Hub',   icon: '✦' },
-      { id: 'integrations', label: 'Integrations',    icon: '⬡' },
-      { id: 'ab',           label: 'A/B Experiments', icon: '⚖' },
+      { id: 'analytics', label: 'EVM',             icon: '$' },
+      { id: 'knowledge',  label: 'Knowledge Hub',  icon: '✦' },
+      { id: 'ab',         label: 'A/B Experiments', icon: '⚖' },
     ],
   },
 ]
+
+function getUserInitials() {
+  try {
+    const user = JSON.parse(localStorage.getItem('project-os:user') ?? 'null')
+    if (!user) return '?'
+    const src = user.name ?? user.email ?? ''
+    const parts = src.trim().split(/\s+/)
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    return src.slice(0, 2).toUpperCase() || '?'
+  } catch { return '?' }
+}
 
 const STAGE_LABEL = {
   intake:            'INTAKE',
@@ -88,18 +97,9 @@ export default function SideNav({ view, setView, project, onOpenChat, onNewProje
       </div>
 
       <div className="sb__footer">
-        <div className="sb__presence">
-          {['MK', 'JD'].map((k, i) => (
-            <div
-              key={k}
-              className="sb__presence-avatar"
-              style={{ background: i === 0 ? 'var(--teal)' : 'var(--amber)' }}
-            >
-              {k}
-            </div>
-          ))}
+        <div className="sb__presence-avatar" style={{ background: 'var(--teal)' }}>
+          {getUserInitials()}
         </div>
-        <div className="sb__user-name">2 online</div>
       </div>
     </aside>
   )

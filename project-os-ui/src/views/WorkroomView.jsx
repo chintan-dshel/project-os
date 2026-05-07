@@ -71,20 +71,41 @@ function ChatMessage({ msg }) {
   const isAgent = msg.role === 'agent'
   const cfg = isAgent ? AGENT_CFG[msg.agent_name] : null
   const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const [copied, setCopied] = useState(false)
+
+  function copy() {
+    navigator.clipboard.writeText(msg.body).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
+  }
+
+  if (isAgent) {
+    return (
+      <div className="wrc-msg wrc-msg--agent">
+        <div className="wrc-msg__doc">
+          <div className="wrc-msg__doc-head">
+            <span
+              className="wrc-msg__doc-icon"
+              style={{ background: cfg?.bg ?? 'var(--bg-3)', color: cfg?.color ?? 'var(--text-2)' }}
+            >
+              {cfg?.icon ?? '★'}
+            </span>
+            <span className="wrc-msg__doc-name" style={{ color: cfg?.color ?? 'var(--ink)' }}>
+              {cfg?.name ?? 'Agent'}
+            </span>
+            <span className="wrc-msg__doc-time">{time}</span>
+            <button className="wrc-msg__copy-btn" onClick={copy}>
+              {copied ? '✓ Copied' : '⎘ Copy'}
+            </button>
+          </div>
+          <div className="wrc-msg__doc-body">{renderMd(msg.body)}</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className={`wrc-msg${isAgent ? ' wrc-msg--agent' : ' wrc-msg--user'}`}>
-      {isAgent && (
-        <div
-          className="wrc-msg__avatar"
-          style={{ background: cfg?.bg ?? 'var(--bg-3)', color: cfg?.color ?? 'var(--text-2)' }}
-        >
-          {cfg?.icon ?? '★'}
-        </div>
-      )}
+    <div className="wrc-msg wrc-msg--user">
       <div className="wrc-msg__bubble">
-        <div className="wrc-msg__content">
-          {isAgent ? renderMd(msg.body) : msg.body}
-        </div>
+        <div className="wrc-msg__content">{msg.body}</div>
         <div className="wrc-msg__time">{time}</div>
       </div>
     </div>
@@ -207,24 +228,21 @@ export default function WorkroomView({ projectId, project }) {
 
       {/* ── Agent consultants (right) ────────────────────────────────────────── */}
       <div className="wr__chat">
-        {/* Agent selector */}
-        <div className="wrc-agents">
-          {Object.entries(AGENT_CFG).map(([key, c]) => (
-            <button
-              key={key}
-              className={`wrc-agent-btn${agent === key ? ' wrc-agent-btn--active' : ''}`}
-              onClick={() => setAgent(key)}
-              style={agent === key ? { borderColor: c.color, background: c.bg } : {}}
-            >
-              <span className="wrc-agent-btn__icon" style={{ color: agent === key ? c.color : undefined }}>
-                {c.icon}
-              </span>
-              <div>
-                <div className="wrc-agent-btn__name">{c.name}</div>
-                <div className="wrc-agent-btn__role">{c.role}</div>
-              </div>
-            </button>
-          ))}
+        {/* Horizontal agent tab bar */}
+        <div className="wr__chat-head">
+          <div className="wr__agent-tabs">
+            {Object.entries(AGENT_CFG).map(([key, c]) => (
+              <button
+                key={key}
+                className={`wr__agent-tab${agent === key ? ' wr__agent-tab--active' : ''}`}
+                onClick={() => setAgent(key)}
+                style={agent === key ? { color: c.color, borderBottomColor: c.color } : {}}
+              >
+                <span className="wr__agent-tab__icon">{c.icon}</span>
+                {c.name}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Messages */}

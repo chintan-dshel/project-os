@@ -2,6 +2,53 @@ import { useState, useEffect } from 'react'
 import { listDocuments, fetchDocument, listGeneratedDocuments, generateDocument, getV2Backlog, listWorkspaceDocs } from '../lib/api.js'
 import { renderMd } from '../lib/renderMd.jsx'
 
+function RetroEmptyTemplate({ onOpenChat }) {
+  const sections = [
+    { label: 'What was delivered',    hint: 'tasks shipped, features completed, goals met' },
+    { label: 'What created friction', hint: 'blockers, delays, things that slowed you down' },
+    { label: 'What I\'d change',      hint: 'process improvements, different decisions' },
+    { label: 'Founder growth read',   hint: 'personal learning from this milestone' },
+    { label: 'Patterns detected',     hint: 'recurring themes the agent noticed' },
+  ]
+  return (
+    <div className="retro-empty">
+      <div className="retro-empty__notice">
+        <div className="retro-empty__notice-body">
+          <span className="retro-empty__notice-icon">◫</span>
+          <div>
+            <div className="retro-empty__notice-title">Retrospective not yet completed</div>
+            <div className="retro-empty__notice-sub">Chat with the Retro Agent to answer the three questions — this report populates automatically when you're done.</div>
+          </div>
+        </div>
+        <button className="retro-empty__cta" onClick={onOpenChat}>Open Retro Agent →</button>
+      </div>
+
+      <div className="retro-empty__skeleton">
+        <div className="retro-empty__meta-row">
+          <div className="retro-empty__meta-cell">
+            <div className="retro-empty__meta-label">Tasks completed</div>
+            <div className="retro-empty__meta-val">— / —</div>
+          </div>
+          <div className="retro-empty__meta-cell">
+            <div className="retro-empty__meta-label">Hours (est. vs actual)</div>
+            <div className="retro-empty__meta-val">—h / —h</div>
+          </div>
+          <div className="retro-empty__meta-cell">
+            <div className="retro-empty__meta-label">Date</div>
+            <div className="retro-empty__meta-val">—</div>
+          </div>
+        </div>
+        {sections.map(s => (
+          <div key={s.label} className="retro-empty__field">
+            <div className="retro-empty__field-label">{s.label}</div>
+            <div className="retro-empty__field-placeholder">{s.hint}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 const ACL_CFG = {
   everyone: { label: 'Everyone', color: 'var(--text-3)' },
   core:     { label: 'Core',     color: 'var(--blue)' },
@@ -18,7 +65,7 @@ const DOC_TYPE_META = {
   'close-report': { icon: '🏁', label: 'Close Report',         color: 'var(--green)' },
 }
 
-export default function DocsView({ projectId, project }) {
+export default function DocsView({ projectId, project, onOpenChat }) {
   const [tab,           setTab]           = useState('docs')
   const [docs,          setDocs]          = useState([])
   const [generatedDocs, setGeneratedDocs] = useState([])
@@ -29,6 +76,7 @@ export default function DocsView({ projectId, project }) {
   const [loadingDocs,   setLoadingDocs]   = useState(true)
   const [loadingDoc,    setLoadingDoc]    = useState(false)
   const [generating,    setGenerating]    = useState(null)
+  const [generateError, setGenerateError] = useState(null)
 
   useEffect(() => {
     Promise.all([
@@ -45,16 +93,20 @@ export default function DocsView({ projectId, project }) {
   }, [projectId])
 
   async function openDoc(type, label, isGenerated = false) {
-    setSelected({ type, label, isGenerated })
+    setSelected({ type, label, isGenerated, isEmpty: false })
     setDocContent(null)
     setLoadingDoc(true)
     try {
       if (isGenerated) {
         const gen = generatedDocs.find(d => d.doc_type === type)
-        setDocContent(gen?.content ?? '_No content available._')
+        setDocContent(gen?.content ?? '_Report exists but content could not be loaded. Try regenerating._')
       } else {
         const d = await fetchDocument(projectId, type)
-        setDocContent(d.content ?? '_No content available yet._')
+        if (!d.content && type === 'retro-report') {
+          setSelected(s => ({ ...s, isEmpty: true }))
+        } else {
+          setDocContent(d.content ?? '_No content available yet._')
+        }
       }
     } catch { setDocContent('_Failed to load. Try again._') }
     finally { setLoadingDoc(false) }
@@ -62,14 +114,19 @@ export default function DocsView({ projectId, project }) {
 
   async function handleGenerate(type) {
     setGenerating(type)
+    setGenerateError(null)
     try {
       const d = await generateDocument(projectId, type)
-      setGeneratedDocs(prev => {
-        const filtered = prev.filter(x => x.doc_type !== type)
-        return [...filtered, d.document]
-      })
-      openDoc(type, DOC_TYPE_META[type]?.label ?? type, true)
-    } catch (e) { console.error(e) } finally { setGenerating(null) }
+      const label = DOC_TYPE_META[type]?.label ?? type
+      setGeneratedDocs(prev => [...prev.filter(x => x.doc_type !== type), d.document])
+      // Set content directly — don't call openDoc which would read stale generatedDocs state
+      setSelected({ type, label, isGenerated: true })
+      setDocContent(d.document.content ?? '_Generation returned empty content._')
+    } catch (e) {
+      setGenerateError(e.message ?? 'Generation failed — check your API budget or try again.')
+    } finally {
+      setGenerating(null)
+    }
   }
 
   function copyDoc() {
@@ -138,7 +195,7 @@ export default function DocsView({ projectId, project }) {
           ? <div className="docs-loading">Loading…</div>
           : docs.length === 0
             ? <div className="docs-sidebar__empty">Documents appear as you progress</div>
-            : docs.map(d => (
+            : docs.filter(d => d.id !== 'execution-plan').map(d => (
               <button
                 key={d.id}
                 className={`docs-item${selected?.type === d.id && !selected?.isGenerated ? ' docs-item--active' : ''}`}
@@ -151,14 +208,33 @@ export default function DocsView({ projectId, project }) {
         }
 
         <div className="docs-sidebar__section" style={{ marginTop: 16 }}>AI REPORTS</div>
+        {generateError && (
+          <div className="docs-gen-error">{generateError}</div>
+        )}
         {[
-          { type: 'milestone-report', label: 'Milestone Report', available: ['execution', 'milestone_retro', 'ship_retro', 'complete'].includes(project?.stage) },
-          { type: 'close-report',     label: 'Close Report',     available: isProjectComplete },
-        ].map(({ type, label, available }) => {
+          {
+            type: 'milestone-report', label: 'Milestone Report',
+            available: ['execution', 'milestone_retro', 'ship_retro', 'complete'].includes(project?.stage),
+            lockHint: 'Available once execution begins',
+          },
+          {
+            type: 'close-report', label: 'Close Report',
+            available: isProjectComplete,
+            lockHint: 'Available after Ship Retro',
+          },
+        ].map(({ type, label, available, lockHint }) => {
           const existing = generatedDocs.find(d => d.doc_type === type)
           const meta     = DOC_TYPE_META[type]
           const isActive = selected?.type === type && selected?.isGenerated
-          if (!available) return null
+          if (!available) {
+            return (
+              <div key={type} className="docs-item docs-item--locked">
+                <span className="docs-item__icon" style={{ opacity: .4 }}>{meta.icon}</span>
+                <span className="docs-item__label" style={{ opacity: .4 }}>{label}</span>
+                <span className="docs-item__lock-hint">{lockHint}</span>
+              </div>
+            )
+          }
           return (
             <div key={type} className={`docs-item docs-item--ai${isActive ? ' docs-item--active' : ''}`}>
               {existing
@@ -208,7 +284,12 @@ export default function DocsView({ projectId, project }) {
               )}
             </div>
             <div className="docs-doc__body">
-              {loadingDoc ? <div className="docs-loading">Generating…</div> : renderMd(docContent)}
+              {loadingDoc
+                ? <div className="docs-loading">Loading…</div>
+                : selected?.isEmpty
+                  ? <RetroEmptyTemplate onOpenChat={onOpenChat} />
+                  : renderMd(docContent)
+              }
             </div>
           </div>
         )}

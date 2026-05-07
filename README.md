@@ -1,6 +1,26 @@
-# Project OS
+# ProjectOS
 
-AI-native project management for solo founders. A multi-agent system that coaches you through the full project lifecycle — from idea to retrospective — using Claude as the engine.
+AI project manager for solo founders — handles intake, planning, execution tracking, and retrospective through a conversational interface backed by specialised Claude agents.
+
+[Live demo](https://project-os-production-4d9c.up.railway.app) · [Watch the demo](TODO — record demo video and add link)
+
+## What's interesting about this
+
+- **Agents are routed by stage, not intent.** A static `STAGE_AGENT` map routes every conversation to exactly one agent based on `project.stage`. There is no NLP classification anywhere in the routing path — the stage is the only signal, and it always resolves unambiguously to the right agent.
+
+- **Completed projects make future ones better.** The retro agent auto-populates a tsvector knowledge store on completion. Planning and execution agents query that store and inject relevant past learnings before every call. No manual curation required — the loop compounds automatically with each project shipped.
+
+- **Two-layer production eval with a self-growing golden set.** Structural assertions run on every deploy. A 15%-sampled LLM judge scores live traffic; high-scoring traces are promoted to a golden dataset that gates CI. The golden set grows from real usage, not hand-authoring.
+
+- **One call gateway with cost telemetry and a hard monthly cap.** Every Anthropic API call routes through a single `callClaude()` wrapper that records tokens, latency, model, and USD cost. A per-user $2/month cap blocks new agent calls when exceeded and fires a dismissable UI banner.
+
+## Tech stack
+
+Node.js · Express · PostgreSQL · React · Claude API (claude-sonnet-4-6) · Railway
+
+## Patterns
+
+See [PATTERNS.md](project-os/PATTERNS.md) for the full architectural index — which patterns originated here, which were inherited, and which were deliberately not applied.
 
 ---
 

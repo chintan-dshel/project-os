@@ -206,6 +206,12 @@ function OutputViewer({ output, projectId, registryAgents, onAction }) {
   const agentInfo = registryAgents.find(a => a.slug === (output.registry_agent_slug ?? output.specialist_type)) ?? { name: output.specialist_type, icon: '★' }
   const isCode   = output.output_format === 'code'
   const canAct   = output.status === 'complete'
+  const [copied, setCopied] = useState(false)
+
+  function copyOutput() {
+    if (!output.output) return
+    navigator.clipboard.writeText(output.output).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
+  }
 
   async function doApprove() { setActing(true); setErr(null); try { await approveOutput(projectId, output.id); onAction() } catch (e) { setErr(e.message) } finally { setActing(false) } }
   async function doReject()  { if (!feedback.trim()) return; setActing(true); setErr(null); try { await rejectOutput(projectId, output.id, feedback); onAction() } catch (e) { setErr(e.message) } finally { setActing(false) } }
@@ -229,7 +235,14 @@ function OutputViewer({ output, projectId, registryAgents, onAction }) {
 
       {output.output && (
         <div className="sp-ov-section">
-          <div className="sp-ov-label">OUTPUT</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="sp-ov-label" style={{ flex: 1 }}>OUTPUT</div>
+            {!isCode && (
+              <button className="sp-ov-copy" onClick={copyOutput}>
+                {copied ? '✓ Copied' : '⎘ Copy'}
+              </button>
+            )}
+          </div>
           {isCode
             ? <CodeOutput content={output.output} language={output.language} />
             : <div className="sp-ov-prose">{renderMd(output.output)}</div>}
@@ -395,19 +408,25 @@ export default function SpecialistsView({ projectId, project, state, refresh }) 
     </div>
   )
 
+  const reviewTitle = selAssignment
+    ? (registryAgents.find(a => a.id === selAssignment.registry_agent_id)?.name ?? 'Agent') + ' — ' + selAssignment.task_key
+    : selOutput
+      ? (registryAgents.find(a => a.slug === (selOutput.registry_agent_slug ?? selOutput.specialist_type))?.name ?? selOutput.specialist_type) + ' — ' + (selOutput.task_title ?? selOutput.task_key)
+      : ''
+
   return (
     <div className="sp-view">
       <BudgetStrip projectId={projectId} />
 
-      {/* ── Left list ── */}
-      <div className="sp-list-col">
+      {/* ── Full-width agent list ── */}
+      <div className="sp-list-col sp-list-col--full">
         <div className="sp-list-header">
           <div className="sp-list-title">
             Agents
             {pending.length > 0 && <span className="sp-assignments-badge" style={{ marginLeft: 8 }}>{pending.length}</span>}
           </div>
-          <button className="sp-new-btn" onClick={handleAnalyze} disabled={analyzing} title="Auto-suggest agents for unassigned tasks">
-            {analyzing ? '⟳…' : '⟳ Auto-assign'}
+          <button className="sp-new-btn sp-new-btn--secondary" onClick={handleAnalyze} disabled={analyzing} title="Analyse tasks and suggest agents">
+            {analyzing ? '⟳ Analysing…' : '⟳ Auto-assign'}
           </button>
           <button className="sp-new-btn" onClick={() => setSelection({ type: 'delegate' })}>+ Delegate</button>
         </div>
@@ -469,53 +488,57 @@ export default function SpecialistsView({ projectId, project, state, refresh }) 
         }
       </div>
 
-      {/* ── Right panel ── */}
-      <div className="sp-content-col">
-        {selAssignment && (
-          <AssignmentPanel
-            key={selAssignment.id}
-            assignment={selAssignment}
-            registryAgents={registryAgents}
-            projectId={projectId}
-            onDone={() => { setSelection(null); load(); refresh() }}
-          />
-        )}
-        {selOutput && (
-          <OutputViewer
-            key={selOutput.id}
-            output={selOutput}
-            projectId={projectId}
-            registryAgents={registryAgents}
-            onAction={() => { load(); refresh() }}
-          />
-        )}
-        {showDelegate && (
-          <DelegateForm
-            projectId={projectId}
-            state={state}
-            registryAgents={registryAgents}
-            onDone={() => { setSelection(null); load(); refresh() }}
-          />
-        )}
-        {!selAssignment && !selOutput && !showDelegate && (
-          <div className="view-empty">
-            <div className="view-empty__icon">◎</div>
-            <div className="view-empty__title">Specialist Agents</div>
-            <div className="view-empty__sub">
-              {pending.length > 0
-                ? `${pending.length} task${pending.length > 1 ? 's' : ''} waiting for review — select one to edit the brief and run the agent.`
-                : outputs.length > 0
-                  ? 'Select a past delegation to review its output.'
-                  : 'Click "⟳ Auto-assign" to analyse your tasks. You approve every agent brief before anything runs.'}
+      {/* ── Delegate modal ── */}
+      {showDelegate && (
+        <div className="sp-review-modal" onClick={e => { if (e.target === e.currentTarget) setSelection(null) }}>
+          <div className="sp-review-modal__inner">
+            <div className="sp-review-modal__bar">
+              <span className="sp-review-modal__title">Delegate a task to a specialist agent</span>
+              <button className="sp-review-modal__close" onClick={() => setSelection(null)}>✕ Close</button>
             </div>
-            {pending.length === 0 && outputs.length === 0 && (
-              <button className="guided-card__btn" style={{ marginTop: 16 }} onClick={handleAnalyze} disabled={analyzing}>
-                {analyzing ? 'Analysing…' : '⟳ Auto-assign tasks →'}
-              </button>
-            )}
+            <div className="sp-review-modal__body">
+              <DelegateForm
+                projectId={projectId}
+                state={state}
+                registryAgents={registryAgents}
+                onDone={() => { setSelection(null); load(); refresh() }}
+              />
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* ── Review modal ── */}
+      {(selAssignment || selOutput) && (
+        <div className="sp-review-modal" onClick={e => { if (e.target === e.currentTarget) setSelection(null) }}>
+          <div className="sp-review-modal__inner">
+            <div className="sp-review-modal__bar">
+              <span className="sp-review-modal__title">{reviewTitle}</span>
+              <button className="sp-review-modal__close" onClick={() => setSelection(null)}>✕ Close</button>
+            </div>
+            <div className="sp-review-modal__body">
+              {selAssignment && (
+                <AssignmentPanel
+                  key={selAssignment.id}
+                  assignment={selAssignment}
+                  registryAgents={registryAgents}
+                  projectId={projectId}
+                  onDone={() => { setSelection(null); load(); refresh() }}
+                />
+              )}
+              {selOutput && (
+                <OutputViewer
+                  key={selOutput.id}
+                  output={selOutput}
+                  projectId={projectId}
+                  registryAgents={registryAgents}
+                  onAction={() => { load(); refresh() }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

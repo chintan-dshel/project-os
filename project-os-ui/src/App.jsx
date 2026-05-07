@@ -19,7 +19,6 @@ import { ApprovalGate, GateErrorBanner } from './components/GateBanner.jsx'
 import SideNav          from './components/SideNav.jsx'
 import ActionBar        from './components/ActionBar.jsx'
 import CommandPalette   from './components/CommandPalette.jsx'
-import IntegrationsBar  from './components/IntegrationsBar.jsx'
 import DashboardView from './views/DashboardView.jsx'
 import ChatView from './views/ChatView.jsx'
 import BriefView from './views/BriefView.jsx'
@@ -28,11 +27,9 @@ import EVMView from './views/EVMView.jsx'
 import TelemetryView from './views/TelemetryView.jsx'
 import SpecialistsView from './views/SpecialistsView.jsx'
 import DocsView from './views/DocsView.jsx'
-import MarketplaceView from './views/MarketplaceView.jsx'
 import KnowledgeView   from './views/KnowledgeView.jsx'
 import WorkspaceView   from './views/WorkspaceView.jsx'
 import WorkroomView    from './views/WorkroomView.jsx'
-import IntegrationsView from './views/IntegrationsView.jsx'
 import ABView           from './views/ABView.jsx'
 import ProjectListPage from './views/ProjectListPage.jsx'
 import AuthPage        from './views/AuthPage.jsx'
@@ -54,9 +51,10 @@ function ProjectShell() {
     updateTaskDirect, addComment, transition,
   } = useProject(id)
 
-  const [view,      setView]      = useState('dashboard')
-  const [chatOpen,  setChatOpen]  = useState(false)
-  const [cmdOpen,   setCmdOpen]   = useState(false)
+  const [view,        setView]        = useState('dashboard')
+  const [chatOpen,    setChatOpen]    = useState(false)
+  const [cmdOpen,     setCmdOpen]     = useState(false)
+  const [costCapHit,  setCostCapHit]  = useState(false)
   const prevStageRef = useRef(null)
 
   useEffect(() => {
@@ -66,6 +64,12 @@ function ProjectShell() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  useEffect(() => {
+    function onCap() { setCostCapHit(true) }
+    window.addEventListener('project-os:cost-cap', onCap)
+    return () => window.removeEventListener('project-os:cost-cap', onCap)
   }, [])
 
   // Reactive: when stage changes, auto-open chat or navigate to dashboard
@@ -144,7 +148,12 @@ function ProjectShell() {
         <ActionBar view={view} project={project} />
 
         <main className="ct">
-          <IntegrationsBar />
+          {costCapHit && (
+            <div className="cost-cap-bar">
+              <span>Monthly API budget limit reached — new agent actions are paused until the next billing period.</span>
+              <button onClick={() => setCostCapHit(false)}>✕</button>
+            </div>
+          )}
 
           {(isAwaiting || gateError || error) && view === 'dashboard' && (
             <div className="view-banners">
@@ -167,12 +176,10 @@ function ProjectShell() {
           {view === 'analytics'    && <EVMView project={project} state={state} />}
           {view === 'telemetry'    && <TelemetryView projectId={id} />}
           {view === 'specialists'  && <SpecialistsView projectId={id} project={project} state={state} refresh={refresh} />}
-          {view === 'docs'         && <DocsView projectId={id} project={project} />}
-          {view === 'marketplace'  && <MarketplaceView />}
+          {view === 'docs'         && <DocsView projectId={id} project={project} onOpenChat={() => setChatOpen(true)} />}
           {view === 'knowledge'    && <KnowledgeView project={project} />}
           {view === 'workspace'    && <WorkspaceView project={project} />}
           {view === 'workroom'     && <WorkroomView projectId={id} project={project} />}
-          {view === 'integrations' && <IntegrationsView />}
           {view === 'ab'           && <ABView />}
         </main>
 

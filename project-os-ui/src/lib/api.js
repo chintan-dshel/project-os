@@ -26,6 +26,9 @@ async function handle(res) {
     err.code     = json.code     ?? null
     err.redirect = json.redirect ?? null
     err.context  = json.context  ?? null
+    if (res.status === 429 && json.code === 'COST_CAP_EXCEEDED') {
+      window.dispatchEvent(new CustomEvent('project-os:cost-cap', { detail: json }))
+    }
     throw err
   }
   return json

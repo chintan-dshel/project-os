@@ -13,10 +13,18 @@ export default function BriefView({ project, state }) {
 
   async function handleSave() {
     setSaving(true)
+    const FIELDS = [
+      'one_liner','core_problem','target_user','scope_items','success_criteria',
+      'open_questions','methodology','hours_per_week','planned_weeks','budget',
+      'confidence_score','project_type',
+    ]
+    const sections = FIELDS
+      .filter(k => project[k] != null && project[k] !== '' && !(Array.isArray(project[k]) && !project[k].length))
+      .map(k => ({ key: k, value: project[k] }))
     try {
       const d = await saveBriefVersion(project.id, {
-        sections: [],
-        change_note: 'Manual save from Brief view',
+        sections,
+        change_note: 'Manual save',
       })
       setBriefMeta(prev => prev ? {
         ...prev,

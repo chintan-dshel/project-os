@@ -65,7 +65,7 @@ app.use('/projects/:id/tasks',         tasksRouter);
 app.use('/projects/:id/transition',    costCapCheck, transitionsRouter);
 app.use('/projects/:id/documents',     costCapCheck, documentsRouter);
 app.use('/projects/:id/raid',          raidRouter);
-app.use('/projects/:id/assignments',   assignmentsRouter);
+app.use('/projects/:id/assignments',   costCapCheck, assignmentsRouter);
 app.use('/registry',                   registryRouter);
 app.use('/knowledge',                  knowledgeRouter);
 app.use('/projects/:id/workspace',     workspaceRouter);

@@ -15,7 +15,19 @@ function EVMLineChart({ phases, totalEst, daysIn, totalDays, hasHours }) {
   }).join(' ')
 
   const doneEV  = allTasks.filter(t => t.status === 'done').reduce((s, t) => s + (parseFloat(t.estimated_hours) || 0), 0)
-  const curWeek = Math.min(Math.ceil(daysIn / 7), weeks)
+  const totalAC = allTasks.reduce((s, t) => s + (parseFloat(t.actual_hours) || 0), 0)
+  // Clamp curWeek to at least 1 when any time has passed so lines are visible
+  const rawWeek = Math.ceil(daysIn / 7)
+  const curWeek = Math.min(Math.max(daysIn > 0 ? 1 : 0, rawWeek), weeks)
+
+  if (daysIn === 0) {
+    return (
+      <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--text-3)', fontSize: 12 }}>
+        Chart populates after day 1 — come back tomorrow to see your first EV data point.
+      </div>
+    )
+  }
+
   const evPoints = Array.from({ length: curWeek + 1 }, (_, i) => {
     const x = padL + (i / weeks) * chartW
     const v = i === 0 ? 0 : (doneEV * (i / Math.max(curWeek, 1)))
@@ -23,8 +35,7 @@ function EVMLineChart({ phases, totalEst, daysIn, totalDays, hasHours }) {
     return `${x.toFixed(1)},${y.toFixed(1)}`
   }).join(' ')
 
-  const totalAC  = allTasks.reduce((s, t) => s + (parseFloat(t.actual_hours) || 0), 0)
-  const acPoints = hasHours && Array.from({ length: curWeek + 1 }, (_, i) => {
+  const acPoints = totalAC > 0 && Array.from({ length: curWeek + 1 }, (_, i) => {
     const x = padL + (i / weeks) * chartW
     const v = i === 0 ? 0 : (totalAC * (i / Math.max(curWeek, 1)))
     const y = padT + chartH - (v / maxVal) * chartH
@@ -54,7 +65,7 @@ function EVMLineChart({ phases, totalEst, daysIn, totalDays, hasHours }) {
         <polyline points={pvPoints} fill="none" stroke="var(--blue)" strokeWidth={1.5} strokeDasharray="5,3" opacity={.7} />
         {evPoints && <polyline points={evPoints} fill="none" stroke="var(--green)" strokeWidth={2} />}
         {acPoints && <polyline points={acPoints} fill="none" stroke="var(--amber)" strokeWidth={2} />}
-        {curWeek > 0 && curWeek < weeks && (
+        {curWeek > 0 && (
           <>
             <line x1={nowX} y1={padT} x2={nowX} y2={padT + chartH} stroke="var(--amber)" strokeWidth={.5} strokeDasharray="2,2" opacity={.6} />
             <text x={nowX + 3} y={padT + 10} fontSize={8} fill="var(--amber)">Now</text>

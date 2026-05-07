@@ -285,7 +285,7 @@ router.get('/generated', async (req, res, next) => {
     const { id } = req.params
     await assertProjectOwner(id, req.user.id)
     const { rows } = await query(
-      `SELECT id, doc_type, title, generated_at, milestone_id
+      `SELECT id, doc_type, title, content, generated_at, milestone_id
        FROM generated_documents WHERE project_id = $1 ORDER BY generated_at DESC`,
       [id]
     )
