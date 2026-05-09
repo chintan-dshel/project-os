@@ -199,3 +199,9 @@ Judge (`__judge__`) calls are tracked in `agent_traces` but excluded from user-f
 ## Architecture
 
 See [docs/AI-ARCHITECTURE.md](project-os/docs/AI-ARCHITECTURE.md) for the full AI system design — agent pipeline, model routing, A/B infrastructure, judge eval pipeline, and security layer.
+
+---
+
+## See also
+
+Working-method showcase: <https://huggingface.co/spaces/cdshelat/second-brain> — stage-driven routing, knowledge injection, and the integration-boundary failure pattern from this project are documented among the 25 curated entries.
